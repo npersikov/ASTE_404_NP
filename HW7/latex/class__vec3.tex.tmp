@@ -1,0 +1,47 @@
+\hypertarget{class__vec3}{}\section{\+\_\+vec3$<$ T $>$ Class Template Reference}
+\label{class__vec3}\index{\+\_\+vec3$<$ T $>$@{\+\_\+vec3$<$ T $>$}}
+
+
+Collaboration diagram for \+\_\+vec3$<$ T $>$\+:
+% FIG 0
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{class__vec3_ae790417c9b3713558524c2136951bcaa}\label{class__vec3_ae790417c9b3713558524c2136951bcaa}} 
+{\bfseries \+\_\+vec3} (T a, T b, T c)
+\item 
+\mbox{\Hypertarget{class__vec3_a2740a2fc35b6431b037e933d7554abaf}\label{class__vec3_a2740a2fc35b6431b037e933d7554abaf}} 
+T \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (int i)
+\item 
+\mbox{\Hypertarget{class__vec3_a047b9cbc385e14f313a4f5de392923df}\label{class__vec3_a047b9cbc385e14f313a4f5de392923df}} 
+T {\bfseries operator\mbox{[}$\,$\mbox{]}} (int i) const
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{class__vec3_a5b0c52131143a6e240867d956714a52a}\label{class__vec3_a5b0c52131143a6e240867d956714a52a}} 
+T {\bfseries d} \mbox{[}3\mbox{]}
+\end{DoxyCompactItemize}
+\subsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{class__vec3_a1b8322c801946f486a2f45e42249fc46}\label{class__vec3_a1b8322c801946f486a2f45e42249fc46}} 
+\hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ {\bfseries operator+} (const \hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ \&a, const \hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ \&b)
+\item 
+\mbox{\Hypertarget{class__vec3_aecdf47bd765b987f184e062d09c16734}\label{class__vec3_aecdf47bd765b987f184e062d09c16734}} 
+\hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ {\bfseries operator-\/} (const \hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ \&a, const \hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ \&b)
+\item 
+\mbox{\Hypertarget{class__vec3_a9660915089ddf52a1798ea286b791df4}\label{class__vec3_a9660915089ddf52a1798ea286b791df4}} 
+T {\bfseries dot} (const \hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ \&a, const \hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ \&b)
+\item 
+\mbox{\Hypertarget{class__vec3_af97e6c6a1941f3e6f25d630a814f162b}\label{class__vec3_af97e6c6a1941f3e6f25d630a814f162b}} 
+double {\bfseries mag} (const \hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ \&a)
+\item 
+\mbox{\Hypertarget{class__vec3_a06648065995e22b2f6bdda8e9e32ab85}\label{class__vec3_a06648065995e22b2f6bdda8e9e32ab85}} 
+std\+::ostream \& {\bfseries operator$<$$<$} (std\+::ostream \&out, const \hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ \&a)
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Vec.\+h\end{DoxyCompactItemize}

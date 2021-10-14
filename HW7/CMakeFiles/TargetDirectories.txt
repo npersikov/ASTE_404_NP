@@ -1,0 +1,3 @@
+/home/nikita/Documents/USC/Homework/ASTE-404/HW7/CMakeFiles/rebuild_cache.dir
+/home/nikita/Documents/USC/Homework/ASTE-404/HW7/CMakeFiles/runTests.dir
+/home/nikita/Documents/USC/Homework/ASTE-404/HW7/CMakeFiles/edit_cache.dir

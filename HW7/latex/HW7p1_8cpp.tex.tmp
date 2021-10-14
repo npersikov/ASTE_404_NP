@@ -1,0 +1,20 @@
+\hypertarget{HW7p1_8cpp}{}\section{H\+W7p1.\+cpp File Reference}
+\label{HW7p1_8cpp}\index{H\+W7p1.\+cpp@{H\+W7p1.\+cpp}}
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include \char`\"{}Vec.\+h\char`\"{}}\newline
+Include dependency graph for H\+W7p1.\+cpp\+:
+% FIG 0
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \hyperlink{HW7p1_8cpp_a42449870a5b511babd3d6df91c8ab1da}{main} (int num\+\_\+arge, char $\ast$$\ast$args)
+\end{DoxyCompactItemize}
+
+
+\subsection{Function Documentation}
+\mbox{\Hypertarget{HW7p1_8cpp_a42449870a5b511babd3d6df91c8ab1da}\label{HW7p1_8cpp_a42449870a5b511babd3d6df91c8ab1da}} 
+\index{H\+W7p1.\+cpp@{H\+W7p1.\+cpp}!main@{main}}
+\index{main@{main}!H\+W7p1.\+cpp@{H\+W7p1.\+cpp}}
+\subsubsection{\texorpdfstring{main()}{main()}}
+{\footnotesize\ttfamily int main (\begin{DoxyParamCaption}\item[{int}]{num\+\_\+arge,  }\item[{char $\ast$$\ast$}]{args }\end{DoxyParamCaption})}
+
