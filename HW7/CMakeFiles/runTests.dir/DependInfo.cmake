@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/nikita/Documents/USC/Homework/ASTE-404/HW7/Vec_tests.cpp" "/home/nikita/Documents/USC/Homework/ASTE-404/HW7/CMakeFiles/runTests.dir/Vec_tests.cpp.o"
+  "/home/nikita/Documents/USC/Homework/ASTE_404_NP/HW7/Vec_tests.cpp" "/home/nikita/Documents/USC/Homework/ASTE_404_NP/HW7/CMakeFiles/runTests.dir/Vec_tests.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

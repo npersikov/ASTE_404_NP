@@ -5,6 +5,9 @@
 #include <math.h>
 
 template<typename T>
+/**
+ * This class defines an object that behaves like a matlab vector.
+ */
 class _vec3
 {
     public : 
@@ -35,6 +38,10 @@ class _vec3
         // double maginitude = a.mag();
         // instead of
         // double maginitude = mag(a);
+        /**
+         * This function gets the magnitude of a vector
+         * @param a is the vector to get the magnitude of.
+         */
         friend double mag(const _vec3<T>&a)
         {
             return sqrt(dot(a,a));

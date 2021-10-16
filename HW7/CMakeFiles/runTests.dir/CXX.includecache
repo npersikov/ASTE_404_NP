@@ -6,15 +6,15 @@
 
 #IncludeRegexTransform: 
 
-/home/nikita/Documents/USC/Homework/ASTE-404/HW7/Vec.h
+/home/nikita/Documents/USC/Homework/ASTE_404_NP/HW7/Vec.h
 ostream
 -
 math.h
 -
 
-/home/nikita/Documents/USC/Homework/ASTE-404/HW7/Vec_tests.cpp
+/home/nikita/Documents/USC/Homework/ASTE_404_NP/HW7/Vec_tests.cpp
 gtest/gtest.h
-/home/nikita/Documents/USC/Homework/ASTE-404/HW7/gtest/gtest.h
+/home/nikita/Documents/USC/Homework/ASTE_404_NP/HW7/gtest/gtest.h
 Vec.h
-/home/nikita/Documents/USC/Homework/ASTE-404/HW7/Vec.h
+/home/nikita/Documents/USC/Homework/ASTE_404_NP/HW7/Vec.h
 

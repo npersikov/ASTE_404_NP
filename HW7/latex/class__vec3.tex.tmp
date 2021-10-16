@@ -2,8 +2,12 @@
 \label{class__vec3}\index{\+\_\+vec3$<$ T $>$@{\+\_\+vec3$<$ T $>$}}
 
 
-Collaboration diagram for \+\_\+vec3$<$ T $>$\+:
+Inheritance diagram for \+\_\+vec3$<$ T $>$\+:
 % FIG 0
+
+
+Collaboration diagram for \+\_\+vec3$<$ T $>$\+:
+% FIG 1
 \subsection*{Public Member Functions}
 \begin{DoxyCompactItemize}
 \item 

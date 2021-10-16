@@ -8,6 +8,9 @@ TEST(VecTest, VecDot)
     EXPECT_EQ(dot(a,b), 2);
 }
 
+/**
+* This class is used to set up for unit testing.
+*/
 class VecTestClass : public ::testing::Test 
 {
     protected:
@@ -44,15 +47,28 @@ class VecTestClass : public ::testing::Test
     bool add_matches = false;
 };
 
+/**
+* This function tests the addition function to see if it works correctly.
+* I am not sure what these arguments are though. One is just a data type and
+* one is just a name???
+*/
 TEST_F(VecTestClass, VecAdd) 
 { // makes a VecTestClass, checks value of add_matches
     EXPECT_EQ(add_matches, true);
 }
+
+/**
+ *  This tests subtraction
+ */
 TEST_F(VecTestClass, VecSub)
 {
     EXPECT_EQ(sub_matches, true);
 }
 
+/**
+* @param argc not sure what this one is for tbh
+* @param argv not sure wht this is either
+*/
 int main(int argc, char**argv)
 {
     testing::InitGoogleTest(&argc, argv);
