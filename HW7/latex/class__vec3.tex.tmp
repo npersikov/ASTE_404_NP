@@ -2,6 +2,10 @@
 \label{class__vec3}\index{\+\_\+vec3$<$ T $>$@{\+\_\+vec3$<$ T $>$}}
 
 
+{\ttfamily \#include $<$Vec.\+h$>$}
+
+
+
 Inheritance diagram for \+\_\+vec3$<$ T $>$\+:
 % FIG 0
 
@@ -38,12 +42,32 @@ T {\bfseries d} \mbox{[}3\mbox{]}
 \mbox{\Hypertarget{class__vec3_a9660915089ddf52a1798ea286b791df4}\label{class__vec3_a9660915089ddf52a1798ea286b791df4}} 
 T {\bfseries dot} (const \hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ \&a, const \hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ \&b)
 \item 
-\mbox{\Hypertarget{class__vec3_af97e6c6a1941f3e6f25d630a814f162b}\label{class__vec3_af97e6c6a1941f3e6f25d630a814f162b}} 
-double {\bfseries mag} (const \hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ \&a)
+double \hyperlink{class__vec3_af97e6c6a1941f3e6f25d630a814f162b}{mag} (const \hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ \&a)
 \item 
 \mbox{\Hypertarget{class__vec3_a06648065995e22b2f6bdda8e9e32ab85}\label{class__vec3_a06648065995e22b2f6bdda8e9e32ab85}} 
 std\+::ostream \& {\bfseries operator$<$$<$} (std\+::ostream \&out, const \hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ \&a)
 \end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$typename T$>$\newline
+class \+\_\+vec3$<$ T $>$}
+
+This class defines an object that behaves like a matlab vector. 
+
+\subsection{Friends And Related Function Documentation}
+\mbox{\Hypertarget{class__vec3_af97e6c6a1941f3e6f25d630a814f162b}\label{class__vec3_af97e6c6a1941f3e6f25d630a814f162b}} 
+\index{\+\_\+vec3@{\+\_\+vec3}!mag@{mag}}
+\index{mag@{mag}!\+\_\+vec3@{\+\_\+vec3}}
+\subsubsection{\texorpdfstring{mag}{mag}}
+{\footnotesize\ttfamily template$<$typename T$>$ \\
+double mag (\begin{DoxyParamCaption}\item[{const \hyperlink{class__vec3}{\+\_\+vec3}$<$ T $>$ \&}]{a }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [friend]}}
+
+This function gets the magnitude of a vector 
+\begin{DoxyParams}{Parameters}
+{\em a} & is the vector to get the magnitude of. \\
+\hline
+\end{DoxyParams}
 
 
 The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
