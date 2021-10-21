@@ -10,8 +10,8 @@ std::mt19937 mt_gen(rnd_device());
 std::uniform_real_distribution<double> rnd_dist;
 
 double rnd();
-double* solveGS(double *a, double *b, double *c, double **R, double *a_prev, double *b_prev, double *c_prev,
-			double *T, double *T_prev, int numCells, int numTimeSteps, int it);
+double* solveNextRow(double *T_old, int width, double dt, double D, double dx);
+double calcTemp(double T_left, double T_center, double T_right, double dt, double D, double dx);
 
 int main()
 {
@@ -25,134 +25,46 @@ int main()
     double i_pulse = 1 + (numCells - 2) * rnd(); // random internal point for pulse location
     double pulseRate = rnd()*(100/dt);
     int endPulseTimeStep = 3000;
-    double D = 0.8; // Diffusion coefficient
+    double D = 1; // Diffusion coefficient
 
     // Initialize 1D T array
-    double *T = new double[numCells];
+    double *T_old = new double[numCells];
+  	for (int n = 0; n < numCells; n++) // Clear data, set all temperatures to 0 K
+    	T_old[n] = 0;  
 
-    // Clear data
-  	for (int n = 0; n < numCells; n++) 
-	{
-    	T[n] = 0;  
-        // cout<<T[n]<<endl;
-	}
+    // Initialize array for saving and plotting
+    double *T_all = new double[numCells*numTimeSteps];
+    for (int n = 0; n < numCells*numTimeSteps; n++) // Clear data, set all temperatures to 0 K
+    	T_all[n] = 0;
 
-    // Initialize coefficient lists
-    double *a = new double[numCells];
-	double *b = new double[numCells];
-	double *c = new double[numCells];
-    double *a_prev = new double[numCells];
-	double *b_prev = new double[numCells];
-	double *c_prev = new double[numCells];
-
-    // Set coefficients for k+1
-    for(int i = 0; i < numCells; i++)
+    for(int ts = 0; ts < numTimeSteps; ts++)
     {
-        a[i] = -dt/2/pow(dx,2);
-        b[i] = dt/pow(dx,2.0) + 1.0/D; // 1/D causes a floating point error
-        cout<<a[i]<<endl;
-        c[i] = a[i];
+        if(ts == 0)
+            T_old[30] = 100;
+
+        double *T_new = solveNextRow(T_old, numCells, dt, D, dx);
+        for(int cell = 0; cell < numCells; cell++)
+            T_all[numCells*ts + cell] = T_old[cell];
+
+        T_old = T_new;
     }
 
-    // Set coefficients for k
-    for(int i = 0; i < numCells; i++)
-    {
-        a_prev[i] = dt/2/pow(dx,2);
-        b_prev[i] = -dt/pow(dx,2.0) + 1.0/D; // 1/D causes a floating point error
-        c_prev[i] = a[i];
-    }
 
-    // Allocate array of pulses
-    double **R = new double*[numCells];
-    for(int r = 0; r < numCells; r++)
-    {
-        R[r] = new double[numTimeSteps];
-    }
 
-    // Create an x by t array of the random pulses
-    bool isPulse = false;
-    double currentPulseTime = 0;
-    double currentPulseMagnitude = 0;
-    for(int t = 0; t < numTimeSteps; t++)
-    {
-        if(t < endPulseTimeStep)
-        {
-            // If there is no pulse, make one
-            if(!isPulse)
-            {
-                t_pulse = 1e-3 * rnd();
-                i_pulse = 1 + (numCells - 2) * rnd(); // random internal point for pulse location
-                pulseRate = rnd()*(100/dt);
-                isPulse = true;
-                currentPulseTime = 0;
-                currentPulseMagnitude = 0;
-                // cout<<"made new pulse"<<endl;
-            }
-            else
-            {
-                // cout<<"current pulse"<<endl;
-                R[(int)i_pulse][t] = currentPulseMagnitude;
-
-                if(currentPulseMagnitude < pulseMagnitude)
-                {
-                    currentPulseMagnitude += pulseRate*dt;
-                    // cout<<pulseRate*dt<<endl;
-                }
-
-                currentPulseTime += dt;
-                // Stop the pulse if it lasts too long
-                if(currentPulseTime >= t_pulse)
-                {
-                    // cout<<"pulse is over"<<endl;
-                    isPulse = false;
-                }
-            } 
-            // cout<<"step: "<<t<<" mag: "<<currentPulseMagnitude<<" pos: "<<(int)i_pulse<<" time: " <<currentPulseTime<< endl;
-        }
-    }
-
-    // Allocate time history array
-    // double **history = new double*[numCells];
-    // for(int r = 0; r < numCells; r++)
-    // {
-    //     history[r] = new double[numTimeSteps];
-    // }
-    double *history = new double[numCells*numTimeSteps];
-    double *T_prev = new double[numCells];
-    for (int n = 0; n < numCells; n++) 
-	{
-    	T_prev[n] = 0;  
-	}
-
-    // Solve the system... I hope
-    int histind = 0;
-    for(int t = 0; t < numTimeSteps; t++)
-    {   
-        double *ans = solveGS(a, b, c, R, a_prev, b_prev, c_prev, T_prev, T_prev, numCells, numTimeSteps, t);
-        for(int i = 0; i < numCells; i++)
-        {
-            history[histind] = ans[i];
-            T_prev[i] = ans[i];
-
-            if(ans[i] > 0)
-                cout <<  ans[i] << endl;
-
-            histind++;
-        }
-    }
 
     // Save the file
-    ofstream out("field.vti");
+    ofstream out("Unsteady_1D_Heat_Sim.vti");
 
   	out<<"<VTKFile type=\"ImageData\">\n";
   	out<<"<ImageData WholeExtent=\"0 "<<numTimeSteps-1<<" 0 "<<numCells-1<<" 0 "<<0<<"\""; 
   	out<<" Origin=\""<<0<<" "<<0<<" "<<0.0<<"\"";
-  	out<<" Spacing=\""<<dx<<" " <<dt<<" "<<0.0<<"\">\n";
+  	out<<" Spacing=\""<<dt*100<<" " <<dx<<" "<<0.0<<"\">\n";
   	out<<"<Piece Extent=\"0 "<<numTimeSteps-1<<" 0 "<<numCells-1<<" 0 "<<0<<"\">\n"; 
   	out<<"<PointData>\n";
 
 	out<<"<DataArray Name=\"T\" NumberOfComponents=\"1\" format=\"ascii\" type=\"Float64\">\n";
-	for (int n=0;n<numCells*numTimeSteps;n++) out<<history[n]<<" ";	
+	//for (int n=0;n<numCells*numTimeSteps;n++) out<<T_all[n]<<" ";	
+    for (int n=0;n<numCells*numTimeSteps;n++) out<<0<<" ";	
 	out<<"\n</DataArray>\n";
 
 	out<<"</PointData>\n";
@@ -163,21 +75,9 @@ int main()
 
 
     // Deallocate all arrays
-
-    for(int r = 0; r < numCells; r++)
-        delete[] R[r];
-
-    delete[] R;
-    R = nullptr;
-
-
-    delete[] history;
-
-    delete[] a;
-	delete[] b;
-	delete[] c;
-
-    delete[] T;
+    
+    delete[] T_old;
+    delete[] T_all;
 
     return 0;
 }
@@ -191,71 +91,48 @@ double rnd()
 }
 
 /**
- * Matrix solver equation modified for 1D
+ * The logic behind solving the 1D unsteady heat equation. Currently, there are no
+ * pulses yet.
+ * 
+ * @return an array of the next rows temperatures.
  */
-double* solveGS(double *a, double *b, double *c, double **R, double *a_prev, double *b_prev, double *c_prev,
-			double *T, double *T_prev, int numCells, int numTimeSteps, int it)
+double* solveNextRow(double *T_old, int width, double dt, double D, double dx)
 {
-    double *ans = new double[numCells];
-
-    // cout<<T[1]<<endl;
-    // cout<<T[20]<<endl;
-    // cout<<T[55]<<endl;
-	int nn = numCells;
-
-    for(int n = 0; n < nn; n++)
+    double *T_new = new double[width];
+    double T_left = 0;
+    double T_center = 0;
+    double T_right = 0;
+    for(int i = 0; i < width; i++)
     {
-        // cout<<b[n]<<endl;
-        double sum = 0;
+        if(i > 0)
+            T_left = T_old[i - 1];
+        else
+            T_left = 0;
 
-        if(a[n] != 0)
-        {
-            sum += a[n]*T[n - 1];
-        }
-        if(c[n] != 0)
-        {
-            sum += c[n]*T[n + 1];
-        }
+        T_center = T_old[i];
 
-        double g = 0;
-        if(n > 0)
-        {
-            g = -a_prev[n]*T[n-1] - b_prev[n]*T[n] - c_prev[n]*T_prev[n+1] + R[n][it];
-        }
+        if(i < width)
+            T_right = T_old[i + 1];
+        else
+            T_right = 0;
 
-        double T_star = (g - sum) / c[n];
-
-        ans[n] = T[n] + 1.4*(T_star - T[n]);
+        T_new[i] = calcTemp(T_left, T_center, T_right, dt, D, dx);
     }
 
-    // if(it%50 == 0)
-    // {
-    // 	double r2_sum = 0;
+    return T_new;
+}
 
-    // 	for(int n = 0; n < nn; n++)
-    // 	{
-    //         double g = -a[n]*T[n-1] - b[n]*T[n] - c[n]*T[n-1] + R[n][it];
-    // 		double sum = 0;
-    // 		if(a[n] != 0)
-    // 		{
-    // 			sum += a[n]*T[n - 1];
-    // 		}
-    // 		sum += b[n]*T[n]; // This must happen every time?
-
-    // 		if(c[n] != 0)
-    // 		{
-    // 			sum += c[n]*T[n + 1];
-    // 		}
-
-    // 		double r = g - sum;
-    // 		r2_sum += r*r;
-    // 	}
-
-    // 	double L2 = sqrt(r2_sum/nn);
-
-    // 	cout << "solver iteration: " << it << ", L2 norm: " << L2 << endl;
-    // 	if(L2 < 1e-6) return true; // break the loop if converged enough.
-    // }
-
-	return ans; // If you get here, that means you didn't converge. Big sad.
+/**
+ * Separating the equation that solves for future temperatures from the algrithm
+ * that solves an entire row for visual clarity.
+ * 
+ * @return the temperature at a cell determined by the location of the last row's
+ * temperatures at the same and adjacent positions.
+ */
+double calcTemp(double T_left, double T_center, double T_right, double dt, double D, double dx)
+{
+    double T = T_center + dt*D*(T_left - 2*T_center + T_right)/(dx*dx);
+    if(T > 5)
+        cout << T << endl;
+    return T;
 }
