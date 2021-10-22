@@ -19,11 +19,7 @@ int main()
     int numCells = 60;
     int numTimeSteps = 15000;
     double dt = 1e-5;
-    double t_pulse = 1e-3 * rnd();
     int pulseMagnitude = 300;
-    // Should this be a different random number? is n_i numCells?
-    double i_pulse = 1 + (numCells - 2) * rnd(); // random internal point for pulse location
-    double pulseRate = rnd()*(100/dt);
     int endPulseTimeStep = 3000;
     double D = 1; // Diffusion coefficient
 
@@ -37,16 +33,54 @@ int main()
     for (int n = 0; n < numCells*numTimeSteps; n++) // Clear data, set all temperatures to 0 K
     	T_all[n] = 0;
 
+    bool isActivePulse = false;
+    double t_pulse = 0.0;
+    double i_pulse = 0.0;
+    double pulseRate = 0.0;
+    double currentPulseMagnitude = 0.0;
+    double pulseTimeElapsed = 0.0;
     for(int ts = 0; ts < numTimeSteps; ts++)
     {
-        if(ts == 0)
-            T_old[30] = 100;
+        // Resolve the current pulse or create a new one if the old one is done.
+        if(ts < endPulseTimeStep)
+        {
+            if(!isActivePulse)
+            {
+                isActivePulse = true;
+                t_pulse = 1e-3 * rnd();
+                i_pulse = 1 + (numCells - 2) * rnd();
+                pulseRate = rnd()*(100/dt);
+                currentPulseMagnitude = 0.0;
+                pulseTimeElapsed = 0.0;
+            }
+            else
+            {
+                if(pulseTimeElapsed >= t_pulse)
+                {
+                    isActivePulse = false;
+                    currentPulseMagnitude = 0.0;
+                }
+                else if(currentPulseMagnitude < pulseMagnitude)
+                {
+                    currentPulseMagnitude += pulseRate*dt;
+                    // Only add pulse to the rod if the pulse is on.
+                    T_old[(int)i_pulse] = currentPulseMagnitude; 
+                }
+                pulseTimeElapsed += dt;
+            }
+        }
 
         double *T_new = solveNextRow(T_old, numCells, dt, D, dx);
+
+        // if(T_new[30] > 5)
+        //     cout << T_new[30] << endl;
+
         for(int cell = 0; cell < numCells; cell++)
             T_all[numCells*ts + cell] = T_old[cell];
 
         T_old = T_new;
+        // if(T_old[30] > 5)
+        //     cout << T_old[30] << endl;
     }
 
 
@@ -56,15 +90,21 @@ int main()
     ofstream out("Unsteady_1D_Heat_Sim.vti");
 
   	out<<"<VTKFile type=\"ImageData\">\n";
-  	out<<"<ImageData WholeExtent=\"0 "<<numTimeSteps-1<<" 0 "<<numCells-1<<" 0 "<<0<<"\""; 
+  	out<<"<ImageData WholeExtent=\"0 "<<numCells-1<<" 0 "<<numTimeSteps-1<<" 0 "<<0<<"\""; 
   	out<<" Origin=\""<<0<<" "<<0<<" "<<0.0<<"\"";
-  	out<<" Spacing=\""<<dt*100<<" " <<dx<<" "<<0.0<<"\">\n";
-  	out<<"<Piece Extent=\"0 "<<numTimeSteps-1<<" 0 "<<numCells-1<<" 0 "<<0<<"\">\n"; 
+  	out<<" Spacing=\""<< dx <<" " << dt*1000 <<" "<<0.0<<"\">\n";
+  	out<<"<Piece Extent=\"0 "<<numCells-1<<" 0 "<<numTimeSteps-1<<" 0 "<<0<<"\">\n"; 
   	out<<"<PointData>\n";
 
 	out<<"<DataArray Name=\"T\" NumberOfComponents=\"1\" format=\"ascii\" type=\"Float64\">\n";
-	//for (int n=0;n<numCells*numTimeSteps;n++) out<<T_all[n]<<" ";	
-    for (int n=0;n<numCells*numTimeSteps;n++) out<<0<<" ";	
+	for (int n=0;n<numCells*numTimeSteps;n++)
+    {
+        out<<T_all[n]<<" ";	
+
+        // if(T_all[n] > 5)
+        //     cout << T_all[n] << " K at index " << n << endl;
+    }
+
 	out<<"\n</DataArray>\n";
 
 	out<<"</PointData>\n";
@@ -132,7 +172,7 @@ double* solveNextRow(double *T_old, int width, double dt, double D, double dx)
 double calcTemp(double T_left, double T_center, double T_right, double dt, double D, double dx)
 {
     double T = T_center + dt*D*(T_left - 2*T_center + T_right)/(dx*dx);
-    if(T > 5)
-        cout << T << endl;
+    // if(T > 5)
+    //     cout << T << endl;
     return T;
 }
