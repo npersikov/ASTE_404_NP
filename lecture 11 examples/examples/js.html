@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+</head>
+<body>
+<script>
+function foo(skip) {     // declare function
+	var msg = "";
+	for (var i=0;i<10;i++) {
+	 if (i!=skip) msg += i;
+	}
+	console.log(msg);  
+	return skip;
+}
+
+var x = foo(7);   // call function
+console.log(x);
+</script>
+</body>
+
+</html>

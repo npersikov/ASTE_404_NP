@@ -1,0 +1,40 @@
+<!--
+ASTE-404 Lesson 11 Canvas Example
+Version 0: 
+-->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style> 
+canvas {border: 1px solid black;} 
+</style>
+</head>
+
+<body>
+<canvas width=600 height=500 id="canv">Canvas not supported!</canvas>
+
+<script>
+var c = document.getElementById("canv");
+var ctx = c.getContext("2d");
+ctx.beginPath();
+ctx.moveTo(20,20);
+ctx.lineTo(400,300);
+ctx.lineTo(300,500);
+ctx.closePath();   // return to starting point
+ctx.fill();     // fill the path
+
+ctx.beginPath();
+ctx.arc(150,240,50,0, 2*Math.PI);
+ctx.fillStyle = "green";
+ctx.strokeStyle = "#0000FF";
+ctx.lineWidth = 5;
+ctx.setLineDash([15, 10]);
+ctx.fill(); 
+ctx.stroke();
+
+</script>
+
+</body>
+
+</html>

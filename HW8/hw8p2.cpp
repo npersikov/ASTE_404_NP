@@ -17,8 +17,9 @@ int main()
 {
     double dx = 1;
     int numCells = 60;
-    int numTimeSteps = 15000;
-    double dt = 1e-5;
+    double factor = 2.0;
+    int numTimeSteps = 15000*factor;
+    double dt = 1e-5*factor;
     int pulseMagnitude = 300;
     int endPulseTimeStep = 3000;
     double D = 1; // Diffusion coefficient
@@ -92,7 +93,7 @@ int main()
   	out<<"<VTKFile type=\"ImageData\">\n";
   	out<<"<ImageData WholeExtent=\"0 "<<numCells-1<<" 0 "<<numTimeSteps-1<<" 0 "<<0<<"\""; 
   	out<<" Origin=\""<<0<<" "<<0<<" "<<0.0<<"\"";
-  	out<<" Spacing=\""<< dx <<" " << dt*1000 <<" "<<0.0<<"\">\n";
+  	out<<" Spacing=\""<< dx <<" " << dt*200 <<" "<<0.0<<"\">\n";
   	out<<"<Piece Extent=\"0 "<<numCells-1<<" 0 "<<numTimeSteps-1<<" 0 "<<0<<"\">\n"; 
   	out<<"<PointData>\n";
 

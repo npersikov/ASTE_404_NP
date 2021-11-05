@@ -1,0 +1,113 @@
+<!--
+ASTE-404 Lesson 11 Bouncy Balls Example
+Version 2: uses array to store ball positions
+-->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  body {
+     background-color: silver;
+   
+  }
+  div.cdiv {
+    display:inline-block;
+    text-align:center;
+    border-radius:20px;
+    box-shadow: 10px 10px #bbccbb;
+    border: 4px dashed green;
+    padding: 1em 2em;
+    margin: 10px 50px;
+    background-color:#eeffee;
+  }
+  canvas {
+    border: 2px solid black;
+    background-color:white;
+  }
+
+  #toggle {
+    font-size:2em;
+    color:blue;
+  }
+</style>
+
+</head>
+<body>
+
+<div class="cdiv">
+<h1>Bouncy Balls Example</h1>
+<canvas width=600 height=500 id="canv"> </canvas>
+<br>
+<p>Click the mouse to add balls</p>
+</div>
+
+<script>
+// global variables
+var canvas = document.getElementById("canv");
+var ctx = canvas.getContext("2d");
+
+var balls = [];  // empty array
+
+function advance() {
+  var gx = 0;
+  var gy = 9.81;    // origin on top
+  var dt = 0.1;
+  for (var i = 0;i<balls.length;i++) {
+      var ball = balls[i]; 
+      ball.u += gx*dt;
+      ball.v += gy*dt;
+      ball.x += ball.u*dt;
+      ball.y += ball.v*dt;
+  
+	  if (ball.y>500) { 
+		 ball.y = 2*500-ball.y;
+		 ball.v = -ball.v;
+	  }
+
+      //remove out of domain objects
+      if (ball.x<-ball.r || ball.x>600+ball.r) {
+         balls.splice(i,1);   // remove 1 element at position i
+      }
+  }
+  draw();   // this will actually draw the objects
+  window.requestAnimationFrame(advance);  // to keep animating
+}
+
+
+function draw() {
+  // clear canvas;
+  ctx.fillStyle = "white";
+  ctx.fillRect(0,0,600,500);
+
+  for (var i = 0;i<balls.length;i++) {
+      var ball = balls[i]; 
+	  // Create gradient
+	  var grd = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, 1.3*ball.r);
+	  grd.addColorStop(0, "red");
+	  grd.addColorStop(1, "white");
+  	  ctx.beginPath();
+  	  ctx.fillStyle = grd;
+	  ctx.arc(ball.x,ball.y,ball.r, 0, 2*Math.PI);
+      ctx.fill(); 
+	}
+}
+
+//add mouse button listener
+canvas.addEventListener("mousedown", function(event) {
+	const rect = canvas.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+    const u = -20+Math.random()*40;
+    const v = -50+Math.random()*100;
+	const r = 10+Math.random()*30;
+    balls.push({x:x,y:y,u:u,v:v,r:r});
+})
+
+//var interval = setInterval(advance,50);
+advance();
+
+</script>
+</body>
+
+</html>

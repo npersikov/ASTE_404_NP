@@ -1,0 +1,225 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+canvas {border: 1px solid gray; box-shadow: 3px 3px #eee;}
+div {display:inline-block; margin-left:10px;vertical-align:top;
+font-family:monospace;}
+div input{background:green;color:gold;margin:0.25em;}
+div input[type="button"] {background-color:#eee;font-size:1.2em;border-radius:6px;border:2px outset gray;color:green;}
+div input[type="button"]:hover {background-color:#fff};
+</style>
+</head>
+
+<body>
+<canvas id="c" width="500px" height="500px">
+</canvas>
+
+<div>
+Spring k: <input id="k" size="3" value="0.3"> <br>
+Friction: <input id="alpha" size="3" value="0.01"> [0..1] <br>
+Time step: <input id="dt" size="3" value="0.1"> <br>
+Balls: <input id="ni" size="1" value="10">&times;<input id="nj" size="1" value="10"> <br>
+<input type="button" value="Restart" onclick="init()">
+</div>
+
+<script>
+const c = document.getElementById("c");
+const ctx = c.getContext('2d');
+
+var ni = 10;
+var nj = 10;
+var balls = [];  // empty array
+
+// integrate velocity and position
+function advance() {
+  // spring constant
+  let k = parseFloat(document.getElementById("k").value);
+  if (isNaN(k)) {k = 0.3;document.getElementById("k").value=k;}
+
+  // friction term
+  let alpha = parseFloat(document.getElementById("alpha").value);
+  if (isNaN(alpha) || alpha<0 || alpha>1) {alpha = 0.01;document.getElementById("alpha").value=alpha;}
+
+  // time step
+  let dt = parseFloat(document.getElementById("dt").value);
+  if (isNaN(dt)) {dt = 0.1;document.getElementById("dt").value=dt;}
+
+  let m = 1;	 // some mass
+
+  // update velocity
+  for (var i=1;i<ni-1;i++)
+    for (var j=1;j<nj-1;j++) {    
+      let x0 = balls[i][j].x;
+      let y0 = balls[i][j].y;
+      //compute total force using only the four nearby neighbors
+      let Fx = 0;
+      let Fy = 0;
+      if (i>0) {
+        let dx = balls[i-1][j].x-x0;
+        let dy = balls[i-1][j].y-y0;
+        Fx += k*dx;
+        Fy += k*dy;
+      }
+      if (i<ni-1) {
+        let dx = balls[i+1][j].x-x0;
+        let dy = balls[i+1][j].y-y0;
+        Fx += k*dx;
+        Fy += k*dy;
+      }
+      if (j>0) {
+        let dx = balls[i][j-1].x-x0;
+        let dy = balls[i][j-1].y-y0;
+        Fx += k*dx;
+        Fy += k*dy;
+      }
+      if (j<nj-1) {
+        let dx = balls[i][j+1].x-x0;
+        let dy = balls[i][j+1].y-y0;
+        Fx += k*dx;
+        Fy += k*dy;
+      }
+      
+      // update velocity
+      balls[i][j].u+=(Fx/m*dt);  
+      balls[i][j].v+=(Fy/m*dt);
+
+      // friction
+      balls[i][j].u*=(1-alpha);
+      balls[i][j].v*=(1-alpha);
+    }
+
+  // update position
+  for (var i =0;i<ni;i++)
+   for (var j=0;j<nj;j++) {   
+     balls[i][j].x+=balls[i][j].u*dt;
+     balls[i][j].y+=balls[i][j].v*dt;
+  }
+
+  draw();
+}
+
+// redraw scene
+function draw() {
+  // clear canvas;
+  ctx.fillStyle = "white";
+  ctx.fillRect(0,0,c.width,c.height);
+
+  //draw sticks
+  for (var i=0;i<ni;i++) 
+    for (var j=0;j<nj;j++) {
+      ctx.strokeStyle="#eee";
+
+      if(i<ni-1) {
+        ctx.beginPath;
+	ctx.moveTo(balls[i][j].x,balls[i][j].y);
+	ctx.lineTo(balls[i+1][j].x,balls[i+1][j].y);
+	ctx.stroke();
+      }
+      if(j<nj-1) {
+        ctx.beginPath;
+        ctx.moveTo(balls[i][j].x,balls[i][j].y);
+        ctx.lineTo(balls[i][j+1].x,balls[i][j+1].y);
+        ctx.stroke();
+      }
+   }
+  
+  // draw spheres
+  for (var i = 0;i<ni;i++)
+    for (var j=0;j<nj;j++) {
+      var ball = balls[i][j]; 
+      var grd = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, 1.1*ball.r);
+      grd.addColorStop(0, "black");
+      grd.addColorStop(1, "white");
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.r, 0, 2 * Math.PI);
+      ctx.fill(); 
+    }
+
+  // continue animation
+  window.requestAnimationFrame(advance);
+}
+
+// create a grid of balls
+function init() {
+  console.log("init");
+  ni = parseInt(document.getElementById("ni").value);
+  if (isNaN(ni) || ni<3 || ni>50) {ni = 10;document.getElementById("ni").value=ni;}
+
+  nj = parseInt(document.getElementById("nj").value);
+  if (isNaN(nj) || nj<3 || nj>50) {nj = 10;document.getElementById("nj").value=nj;}
+
+  // set spacing and origin
+  let di = 0.8*c.width/(ni-1);
+  let dj = 0.8*c.height/(nj-1);
+  let x0 = 0.1*c.width;
+  let y0 = 0.1*c.height;
+
+  balls = [];
+  for (var i=0;i<ni;i++) {
+    var col = [];           // empty column
+    for (var j=0;j<nj;j++) {
+      const x = x0+i*di;
+      const y = y0+j*dj;
+      const u = 0;
+      const v = 0; 
+      const r = 10;
+      col.push({x:x,y:y,u:u,v:v,r:r});
+    }
+    balls.push(col);	// add entire column
+  }
+} 
+
+// generate spheres and start animation
+init();
+window.requestAnimationFrame(advance);
+
+
+//drag and drop support
+var dragging = {i:-1,j:-1};
+c.addEventListener("mousedown", dragStart);
+c.addEventListener("mousemove", drag);
+document.addEventListener("mouseup", dragStop);
+
+// mouse down
+function dragStart(event){
+  const rect = c.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const y = event.clientY - rect.top
+
+  // check if mouse on top of one the balls
+  for (var i=1;i<ni-1;i++) 
+    for (var j=1;j<nj-1;j++) {
+      dx = balls[i][j].x-x;
+      dy = balls[i][j].y-y;
+	  if (Math.sqrt(dx*dx+dy*dy)<=balls[i][j].r) {
+        dragging.i=i;
+        dragging.j=j;     
+        return;  // stop search
+      }     
+    }  
+}
+
+// mouse move
+function drag(event) {
+  if (dragging.i<0) return;
+  const rect = c.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const y = event.clientY - rect.top
+  balls[dragging.i][dragging.j].x=x;
+  balls[dragging.i][dragging.j].y=y;
+  balls[dragging.i][dragging.j].u=0;
+  balls[dragging.i][dragging.j].v=0;
+}
+
+// mouse up
+function dragStop(event) {
+  dragging.i=-1; 
+}
+
+  
+</script>
+</body>
+</html>

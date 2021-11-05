@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"> 
+
+<!--
+QCM Log file analyzer
+Developed May 2015 by Lubos Brieda, lubos.brieda@particleincell.com
+
+version 0.3, added the following features, 8/19/2015
+- fixed background text highlighting in chrome when dragging mouse to select zoom area
+- performing TGA and TGA-R using the keyboard alone using "T" and "R" buttons
+- changed elapsed time in output.txt from minutes to hours per user request
+- fixed resize handle not showing up in Chrome. Learned that Chrome does not allow shrinking. 
+  also changed the default size to 600x400 since IE does not support resizing
+- TGA limits are "niced" to the nearest 10 and 1
+- added timestamp for start of x data to the xy plot
+- fixed TGA plot not reappearing after closing
+- added view undo
+
+version 0.2, adding support for CrystalTek QCM, 6/8/2015
+
+version 0.1, initial release, 6/1/2015
+Features:
+- supports QCM research log files
+- multiple headers are stripped and data appended
+- comments are moved to a new column
+- rate is recomputed using central difference
+- delta-delta is computed by automatically fitting cubic to non-crystal bakeout data
+- tga can be computed by user using user interface
+- user interface supports multiple channels, two X and two Y axis
+- view can be zoomed in by double clicking selection
+- TGA can be computed by pressing T button
+- TGA reference curve can be subtracted by pressing R button
+
+
+Feature Requests:
+- labelling of major events
+- show legend of plotted data
+
+Released under NASA Open Source Release "GSC-17514-1, HTML QCM Analyzer"
+
+Copyright � 2015 United States Government as represented by the Administrator of the National Aeronautics and Space Administration. All Rights Reserved.
+
+Copyright � 2015 Particle In Cell Consulting LLC. All Rights Reserved.
+
+WARRANTY
+A. No Warranty: THE SUBJECT SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY OF ANY KIND, EITHER EXPRESSED, IMPLIED, OR STATUTORY,INCLUDING, BUT NOT LIMITED TO, ANY WARRANTY THAT THE SUBJECT SOFTWARE WILL CONFORM TO SPECIFICATIONS, ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR FREEDOM FROM INFRINGEMENT, ANY WARRANTY THAT THE SUBJECT SOFTWARE WILL BE ERROR FREE, OR ANY WARRANTY THAT DOCUMENTATION, IF PROVIDED, WILL CONFORM TO THE SUBJECT SOFTWARE. THIS AGREEMENT DOES NOT, IN ANY MANNER, CONSTITUTE AN ENDORSEMENT BY GOVERNMENT AGENCY OR ANY PRIOR RECIPIENT OF ANY RESULTS, RESULTING DESIGNS, HARDWARE, SOFTWARE PRODUCTS OR ANY OTHER APPLICATIONS RESULTING FROM USE OF THE SUBJECT SOFTWARE. FURTHER, GOVERNMENT AGENCY DISCLAIMS ALL WARRANTIES AND LIABILITIES REGARDING THIRD-PARTY SOFTWARE, IF PRESENT IN THE ORIGINAL SOFTWARE, AND DISTRIBUTES IT "AS IS."
+
+B. Waiver and Indemnity: RECIPIENT AGREES TO WAIVE ANY AND ALL CLAIMS AGAINST THE UNITED STATES GOVERNMENT, ITS CONTRACTORS AND SUBCONTRACTORS, AS WELL AS ANY PRIOR RECIPIENT. IF RECIPIENT'S USE OF THE SUBJECT SOFTWARE RESULTS IN ANY LIABILITIES, DEMANDS, DAMAGES, EXPENSES OR LOSSES ARISING FROM SUCH USE, INCLUDING ANY DAMAGES FROM PRODUCTS BASED ON, OR RESULTING FROM, RECIPIENT'S USE OF THE SUBJECT SOFTWARE, RECIPIENT SHALL INDEMNIFY AND HOLD HARMLESS THE UNITED STATES GOVERNMENT, ITS CONTRACTORS AND SUBCONTRACTORS, AS WELL AS ANY PRIOR RECIPIENT, TO THE EXTENT PERMITTED BY LAW. RECIPIENT'S SOLE REMEDY FOR ANY SUCH MATTER SHALL BE THE IMMEDIATE, UNILATERAL TERMINATION OF THIS AGREEMENT.
+-->
+<style>
+body{font-family: monospace;font-size:14px;}
+h1{font-size:1.4em;padding:0em;margin:0 0 0.0em;text-align:center;}
+div#top{display:inline-block;
+vertical-align:top;
+box-shadow: 3px 3px #888; 
+background-color:#fff; border:1px solid #999; padding: 0.4em;margin:0 0 0.5em;}
+div {display:inline-block;vertical-align:top;}
+div#drop {
+	display:inline-block; max-width:20em;font-size:0.9em;
+	font-weight:bold;text-align:left;color:gray;
+	overflow:hidden;
+	}
+
+input[type="text"] {width:5em;font-family:monospace;}
+form{display:inline-block;min-width:20em;}
+
+div#download{display:inline-block; vertical-align:top;}
+p#log{font-family:monospace;color:gray;}
+div.resize{width:700px;height:400px;display:inline-block;border:1px solid black;resize:both;overflow:hidden;margin-bottom:0.5em;padding-right:1em;}
+fieldset#fs_axis{display:inline-block;}
+#fs_channels{max-height:10em;overflow-y:scroll;}
+input[type="color"] {margin-left:0.2em;width: 3em;}
+#close_tga{position:absolute;float:left}
+.hidden{display:none !important;}
+#c_ui{position:absolute;left:0;}
+div.logo{
+width:72px;
+height:35px;
+background-image: url(data:image/png;base64,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);
+}
+</style>
+</head>
+<body>
+<div id="top">
+<h1>QCM Analyzer (v0.3)</h1>
+ <form>
+ <fieldset id="fs_axis"><legend>Axis</legend>
+ X1: range: <input type="text" id="xmin1">:<input type="text" id="xmax1">, dx:<input type="text" id="dx1"> <input id="rescx1" type="button" title="rescale X1" value="&#x2194;"><br>
+ Y1: range: <input type="text" id="ymin1">:<input type="text" id="ymax1">, dy:<input type="text" id="dy1">  <input id="rescy1" type="button" title="rescale Y1" value="&#x2195;"><br>
+ X2: range: <input type="text" id="xmin2">:<input type="text" id="xmax2">, dx:<input type="text" id="dx2">  <input id="rescx2" type="button" title="rescale X2" value="&#x2194;"><br>
+ Y2: range: <input type="text" id="ymin2">:<input type="text" id="ymax2">, dy:<input type="text" id="dy2">  <input id="rescy2" type="button" title="rescale Y2" value="&#x2195;"><br>
+ </fieldset>
+ <div style="width:9em" id="zoom">
+ <input type="button" id="b_T" value="T" title="Perform TGA"><input type="button" id="b_R" value="R" title="Subtract Reference Curve"><br>
+ <input type="button" value="&#x21a9" id="b_U" title="undo last view change">
+ </div>
+ <br>
+ 
+ <fieldset id="fs_channels">
+ <legend>Channels</legend>
+ <table id="table_channels">
+ </table>
+ </fieldset>
+ </form>
+ </div>
+ <div>
+ <div id="drop">Drop the input file into the blank area below</div><br>
+ <div id="download"></div><br>
+ <div id="download_tga"></div>
+ </div><br>
+
+<div class="resize" id="res_div">
+<div id="c_ui" class="hidden"><input type="button" value="T" id="c_T"><input type="button" value="R" id="c_R"></div>
+<canvas id="c" ></canvas>
+</div>
+
+<div class="resize hidden" id="res_tga">
+<input type="button" value="&#x2717;" id="close_tga"><canvas id="c_tga" ></canvas>
+</div>
+
+<p id="log"></p>
+<a href="https://www.particleincell.com"><div title="Developed by Particle In Cell Consulting LLC" class="logo"></div></a>
+<script>
+
+window.onload=function(){init();}
+
+var log_ele;
+var interval_id;
+var c_main;c_tga;
+function init()
+{
+	log_ele = document.getElementById('log');
+	
+	// Setup the dnd listeners.
+	var dropZone = document.getElementsByTagName('body')[0];
+	//var dropZone = document.getElementById('drop');
+	dropZone.addEventListener('dragover', handleDragOver, false);
+	dropZone.addEventListener('dragleave', handleDragLeave, true);
+	dropZone.addEventListener('drop', handleFileSelect, false);
+
+	var eles =document.getElementsByTagName("input");
+	for (var i=0;i<eles.length;i++)
+	{
+		if (eles[i].type=="text") eles[i].addEventListener("change",(function(e){draw();}));
+		if (eles[i].type=="button" &&
+			eles[i].id.indexOf("b_")==-1) eles[i].addEventListener("click",(function(e){click(e);draw();}));		
+	}
+	
+	document.getElementById("c").addEventListener("mousedown",(function(e){mouseDown(e);}),false);
+	window.addEventListener("mouseup",(function(){mouseUp();}),false);
+	document.getElementById("c").addEventListener("mousemove",(function(e){mouseMove(e);}),false);
+	document.getElementById("c").addEventListener("dblclick",(function(e){mouseDbl(e);}),false);
+	
+	document.getElementById("close_tga").addEventListener("click",(function(e){(e.target.parentNode).classList.add("hidden");}),false);
+	/*T and R buttons*/
+	document.getElementById("c_T").addEventListener("click",(function(e){showTGA(true);}));
+	document.getElementById("c_R").addEventListener("click",(function(e){addTGARef();}));
+	document.getElementById("b_T").addEventListener("click",(function(e){showTGA(true,true);}));
+	document.getElementById("b_R").addEventListener("click",(function(e){addTGARef(true);}));
+	document.getElementById("b_U").addEventListener("click",(function(e){undoView();}));
+	
+	/*keypress so that TGA can be done without the mouse*/
+	/*document.addEventListener("keypress", (function(evt){
+    console.log(evt.charCode);}));*/
+ 
+ 
+	var c=document.getElementById("c");
+	ctx=c.getContext("2d");
+	
+	c_main = new Canvas("c");
+	c_tga = new Canvas("c_tga");
+	
+	interval_id = window.setInterval(checkSize, 200);
+	
+}
+
+/*rescaling of data ranges*/
+function click(e)
+{
+	switch(e.target.id)
+	{
+		case "rescx1": rescaleX(1);break;
+		case "rescy1": rescaleY(1);break;
+		case "rescx2": rescaleX(2);break;
+		case "rescy2": rescaleY(2);break;	
+	}
+}
+
+function rescaleY(id)
+{
+	var lims = [1e66,-1e66];
+	
+	for (var i=0;i<channels.length;i++)
+	{
+		var channel = channels[i];
+		
+		for (var t=0;t<types.length;t++)
+		{
+			lims2 = lims;	
+			var type=types[t];
+			var data;
+			switch (type)
+			{
+				case "f": data=channel.frequency;break;
+				case "r": data=channel.rate;break;
+				case "d": data=channel.delta_delta;break;
+				case "v": data=channel.voltage;break;
+				case "t": data=channel.temperature;break;
+			}
+		
+			var view = channel.view[type];
+			if (view.y==(id-1) && (view.line || view.markers)) lims2 = range(data);
+			if (lims2[0]<lims[0]) lims[0]=lims2[0];
+			if (lims2[1]>lims[1]) lims[1]=lims2[1];		
+		}
+	}
+	
+	/*set reasonable values if no data*/
+	if (lims[0]>lims[1]) lims=[0,1];
+	
+	var dy = parseFloat(((lims[1]-lims[0])/10).toPrecision(2));
+	document.getElementById("ymin"+id).value=lims[0].toFixed(2);
+	document.getElementById("ymax"+id).value=lims[1].toFixed(2);
+	document.getElementById("dy"+id).value=dy;
+	
+}
+
+function rescaleX(id)
+{
+	var lims = [1e66,-1e66];
+	for (var i=0;i<channels.length;i++)
+	{
+		var channel = channels[i];
+		
+		for (var t=0;t<types.length;t++)
+		{
+			lims2 = lims;	
+			var type=types[t];
+			var view = channel.view[type];
+			if (view.x==(id-1) && (view.line || view.markers)) lims2 = range(channel.stamp);
+		
+			if (lims2[0]<lims[0]) lims[0]=lims2[0];
+			if (lims2[1]>lims[1]) lims[1]=lims2[1];		
+		}
+	}
+	
+	if (lims[0]>lims[1]) lims=[0,1];
+	
+	var dx = parseFloat(((lims[1]-lims[0])/10).toPrecision(1));
+	document.getElementById("xmin"+id).value=lims[0].toFixed(2);
+	document.getElementById("xmax"+id).value=lims[1].toFixed(2);
+	document.getElementById("dx"+id).value=dx;
+}
+
+/*canvas selection highlighting*/
+var mouse=false;
+var sel_x0=0;sel_x1=0,sel_x2=0;
+var mouse_ui;
+
+/*issue is that doubleclick also causes mouseDown. Hence,
+we save the position to sel_x0, but end up using it (setting sel_x1)
+only during first move*/
+function mouseDown(e)
+{
+	e.preventDefault();  /*prevent Chrome from selecting background*/
+	mouse=true;
+	var c=c_main;
+	sel_x0 = e.layerX;
+	if (sel_x0<c_main.PADDING_LEFT) sel_x0=c.PADDING_LEFT;
+	if (sel_x0>(c.w-c.PADDING_RIGHT)) sel_x0=c.w-c.PADDING_RIGHT;
+	mouse_ui = document.getElementById("c_ui");
+}
+
+function mouseUp(e)
+{
+	mouse=false;
+}
+
+function mouseMove(e)
+{
+	if (!mouse || channels.length==0) return;
+	
+	if (sel_x0>0) {sel_x1=sel_x0;sel_x0=0;}
+	
+	sel_x2 = e.layerX;
+	var c=c_main;
+	if (sel_x2<c.PADDING_LEFT) sel_x2=c.PADDING_LEFT;
+	if (sel_x2>(c.w-c.PADDING_RIGHT)) sel_x2=c.w-c.PADDING_RIGHT;
+	
+	if (Math.abs(sel_x2-sel_x1)>10)
+	{
+		mouse_ui.classList.remove('hidden');
+	}
+	
+	ctx.putImageData(c.image_data,0,0);
+	ctx.beginPath();
+	ctx.fillStyle='rgba(255,255,200,0.7)';
+	ctx.fillRect(sel_x1,c.PADDING_BOTTOM,sel_x2-sel_x1,c.h-c.PADDING_TOP-c.PADDING_BOTTOM);
+	
+	var ui = document.getElementById("c_ui");
+	ui.style.left = (sel_x2-40)+"px";
+}
+
+/*handles doubleclick*/
+function mouseDbl(e)
+{
+	/*do nothing if we don't have an active selected area*/
+	if (Math.abs(sel_x1-sel_x2)<10) return;
+	
+	/*compute limits*/
+	var x1,x2;
+	if (sel_x1<sel_x2) {x1=sel_x1; x2=sel_x2;} else {x1=sel_x2;x2=sel_x1;}
+
+	xlims = [];	dx = [];
+	var e_min = document.getElementById("xmin1");
+	var e_max = document.getElementById("xmax1");
+	
+	xlims[0] = parseFloat(e_min.value);
+	xlims[1] = parseFloat(e_max.value);
+	
+	x1 = c_main.StoX(x1,xlims);
+	x2 = c_main.StoX(x2,xlims);
+	
+	if (x1<1) x1=x1.toPrecision(3); else x1=x1.toFixed(2);
+	if (x2<1) x2=x2.toPrecision(3); else x2=x2.toFixed(2);	
+	e_min.value = x1;
+	e_max.value = x2;
+	draw();
+	
+}
+
+/*changes the range to next values divisible by divisor*/
+function niceValues(range,divisor)
+{
+    var nice=[];
+	nice[0] = Math.floor(range[0]/divisor)*divisor;
+	nice[1] = Math.ceil(range[1]/divisor)*divisor;
+	return nice;
+}
+
+/*tga globals*/
+var tgar_f=[];
+var tgar_T=[];
+var tga_f=[];
+var tga_T=[];
+/*shows TGA plot*/
+function showTGA(reset,use_X1)
+{
+	var channel;
+	
+	for (var i=0;i<channels.length;i++)
+	{
+		if (channels[i].view.f.line || channels[i].view.f.markers)
+		{channel=channels[i];break;}
+	}
+	
+	if (typeof(channel)=="undefined") return;
+		
+	if (reset || tga_f.length==0) 
+	{
+		tgar_T=[0];tgar_f=[0];
+	
+		/*hide buttons*/
+		document.getElementById("c_ui").classList.add("hidden");
+		document.getElementById("res_tga").classList.remove("hidden");
+		checkSize();	/*force resize*/
+		
+		/*compute limits*/
+		var x1,x2;
+		if (sel_x1<sel_x2) {x1=sel_x1; x2=sel_x2;} else {x1=sel_x2;x2=sel_x1;}
+
+		xlims = [];	dx = [];
+		var e_min = document.getElementById("xmin"+(channel.view.f.x+1));
+		var e_max = document.getElementById("xmax"+(channel.view.f.x+1));
+		xlims[0] = parseFloat(e_min.value);
+		xlims[1] = parseFloat(e_max.value);	
+		
+		/*if TGA was started by the button in the UI box, then use X1 range data*/
+		if (use_X1==true)
+		{
+			x1 = xlims[0];
+			x2 = xlims[1];
+		}
+		else  /*grab data from the mouse selection*/
+		{
+			x1 = c_main.StoX(x1,xlims);
+			x2 = c_main.StoX(x2,xlims);
+		}
+		/*find data*/
+		var stamp = channels[0].stamp;
+		
+		var i_start=0;
+		for (;i_start<stamp.length;i_start++) {if (stamp[i_start]>=x1) break;}
+		var i_end=i_start;
+		for (;i_end<stamp.length;i_end++) {if (stamp[i_end]>=x2) break;}
+		
+		/*computeTGA*/
+		tga_T=[];
+		tga_f=[]; 
+		
+		for (var i=i_start;i<i_end;i++)
+		{
+			/*terminate if temperature starts coming down*/
+			if (tga_T.length>0 && ((channel.temperature[i]-tga_T[tga_T.length-1])<-1)) break;
+			tga_T.push(channel.temperature[i]);
+			tga_f.push(channel.frequency[i]);
+			
+		}
+	}
+	
+	/*subtract reference*/
+	var f=[];
+	for (var i=0;i<tga_f.length;i++)
+	{
+		/*eval reference at this temperature*/
+		var f_ref = channel.eval(tgar_T,tgar_f,tga_T[i]);
+		f.push(tga_f[i]-f_ref);
+	}
+	
+	var dfdT=channel.dFdx(f,tga_T);
+	
+	/*nice values*/
+	xlims[0]=niceValues(range(tga_T),10);
+	ylims[0]=niceValues(range(dfdT),1);
+	dx[0]=10;
+	dy[0]=(ylims[0][1]-ylims[0][0])/10;
+	
+	c_tga.reset();
+	/*plot axis*/
+	c_tga.add_axisX(xlims,dx,0);	
+	c_tga.add_axisY(ylims,dy,0);
+	
+	c_tga.add_line(tga_T,dfdT,xlims[0],ylims[0],"red");
+	c_tga.draw();
+	generateTGAOutput(tga_T,dfdT);
+}
+
+function addTGARef(use_X1)
+{
+	/*hide buttons*/
+	document.getElementById("c_ui").classList.add("hidden");
+	
+	/*find data*/
+	var channel;
+	for (var i=0;i<channels.length;i++)
+	{
+		if (channels[i].view.f.line || channels[i].view.f.markers)
+		{channel=channels[i];
+		break;}
+	}
+	
+	/*compute limits*/
+	var x1,x2;
+	if (sel_x1<sel_x2) {x1=sel_x1; x2=sel_x2;} else {x1=sel_x2;x2=sel_x1;}
+
+	if (typeof(channel)=="undefined") return;
+
+	xlims = [];	dx = [];
+	var e_min = document.getElementById("xmin"+(channel.view.f.x+1));
+	var e_max = document.getElementById("xmax"+(channel.view.f.x+1));
+	xlims[0] = parseFloat(e_min.value);
+	xlims[1] = parseFloat(e_max.value);	
+	
+	/*if TGA-R was started by the button in the UI box, then use X1 range data*/
+	if (use_X1==true)
+	{
+		x1 = xlims[0];
+		x2 = xlims[1];
+	}
+	else  /*grab data from the mouse selection*/
+	{
+		x1 = c_main.StoX(x1,xlims);
+		x2 = c_main.StoX(x2,xlims);
+	}
+	
+	var stamp = channels[0].stamp;
+	
+	var i_start=0;
+	for (;i_start<stamp.length;i_start++) {if (stamp[i_start]>=x1) break;}
+	var i_end=i_start;
+	for (;i_end<stamp.length;i_end++) {if (stamp[i_end]>=x2) break;}
+	
+	/*computeTGA*/
+	tgar_T=[];
+	tgar_f=[]; 
+	
+	for (var i=i_start;i<i_end;i++)
+	{
+		tgar_T.push(channel.temperature[i]);
+		tgar_f.push(channel.frequency[i]);
+	}
+	
+	showTGA(false);
+}
+
+
+function checkSize()
+{
+	var DELTA=10;	/*need to add little buffer so the resize handle shows up*/
+	var ids=["res_div","res_tga"];
+	var cns=[c_main,c_tga];
+	for (var i=0;i<ids.length;i++)
+	{
+		var ele = document.getElementById(ids[i]);
+		var bw = ele.offsetWidth;
+		var bh = ele.offsetHeight;
+		if ((bw>0 && bh>0) && (bw!=(cns[i].w+DELTA) || bh!=(cns[i].h+DELTA)))
+		{
+			if (ids[i]=="res_div") 
+			{
+				/*hide buttons*/
+				document.getElementById("c_ui").classList.add("hidden");
+			}
+			cns[i].resize(bw-DELTA,bh-DELTA);
+		}
+	}	
+}
+
+function log(text) {log_ele.innerHTML+=text+"<br>";}
+
+/*recomputes delta delta*/
+function recompute()
+{
+	for (var i=0;i<channels.length;i++)
+		channels[i].recompute();
+}
+
+/*structure to hold data*/
+function Channel(name)
+{
+	 Channel.prototype.append = function(stamp,temperature,voltage,frequency,rate) {		
+			/*we save stamp as delta from stamp0 for ease of plotting*/
+			if (this.stamp0<0) this.stamp0=stamp;	/*set stamp0 if not yet set*/			
+			this.stamp.push(stamp-this.stamp0);
+			this.temperature.push(parseFloat(temperature));
+			this.voltage.push(parseFloat(voltage));
+			this.frequency.push(parseFloat(frequency));
+			this.raw_rate.push(parseFloat(rate));
+	 }
+	 
+	 Channel.prototype.addComment = function(stamp,msg)
+	 {
+		this.comment[this.stamp.length]=msg;
+	 }
+	 
+	 /*simple sorting function*/
+	 Channel.prototype.sort = function() {
+	  var flipped,tmp;
+	  do{
+		  flipped=false;
+		  for (var i=0;i<this.x.length-1;i++)
+		  {
+			if (this.x[i]>this.x[i+1])
+			{
+				tmp=this.x[i];this.x[i]=this.x[i+1];this.x[i+1]=tmp;
+				tmp=this.y[i];this.y[i]=this.y[i+1];this.y[i+1]=tmp;
+				flipped=true;
+			}
+		  }
+	  } while(flipped);
+	 }
+	 
+	 /*computes derivative */
+	 Channel.prototype.dFdx = function(f,x)
+	 {
+		var df =[];
+		var ni = f.length;
+	 	for (var i=1;i<ni-1;i++)
+		{
+			if (Math.abs(x[i+1]-x[i-1])>0)
+				df[i] = (f[i+1]-f[i-1])/(x[i+1]-x[i-1]);			
+			else
+				df[i] = 0;
+		}
+		
+		df[0] = (Math.abs(x[1]-x[0])>0) ? ((f[1]-f[0])/(x[1]-x[0])) : 0;
+		df[ni-1] = (Math.abs(x[ni-1]-x[ni-1])>0) ? ((f[ni-1]-f[ni-2])/(x[ni-1]-x[ni-2])) : 0;
+
+		return df;
+	 }
+	 
+	  /*computes smooth rate*/
+	  Channel.prototype.process = function()
+	  {
+		/*compute central difference rate*/
+		var ni=this.stamp.length;
+		var $ = this;
+		var rate = $.dFdx($.frequency,$.stamp);
+		$.sampling = $.dFdx($.temperature,$.stamp);
+		
+		/*mark times when collecting QCM rates*/
+		for (var i=0;i<ni;i++)
+		{
+			if (Math.abs($.sampling[i])>20 || rate[i]<0) $.sampling[i]=0;
+				else $.sampling[i]=1;		
+		}
+		
+		/*shrink sampling inward*/
+		for (var pass=0;pass<5;pass++)
+		{
+			for (var i=1;i<ni-1;i++)
+			{
+				if (!$.sampling[i])
+				{
+					$.sampling[i-1] = 0;
+					$.sampling[i+1] = 0;
+					i++;
+				}
+			}
+		}
+		//$.voltage= $.sampling;	/*for testing*/
+		
+		/*use smoothing kernel to smooth data*/
+		for (var i0=0;i0<ni;i0++)
+		{
+			var imin = i0-5;
+			var imax = i0+5;
+			if (imin<0) imin=0;
+			if (imax>ni-1) imax=ni-1;
+			
+			/*average dt, multiply by two*/
+			var b = ($.stamp[imax]-$.stamp[imin]);
+			
+			var sum_nom=0;
+			var sum_denom=0;
+			for (var i=imin;i<=imax;i++)
+			{
+				var a = ($.stamp[i0]-$.stamp[i]);
+				var K=Math.exp(-(a*a)/(2*b*b));
+				sum_nom+=K*rate[i];
+				sum_denom+=K;
+			}
+			
+			$.rate[i0] = sum_nom/sum_denom;
+		}
+				
+		$.recompute();
+	}	/*end of function*/
+
+	/*recomputes delta delta by fitting a cubic spline to freq. rate*/
+	Channel.prototype.recompute = function()
+	{
+		var $=this;
+			
+		var x=[];
+		var a=[];
+		
+		var i=0,i2,j;
+		var np = $.sampling.length;
+		while (i<np)
+		{
+			/*if we get to a sampling region after not sampling*/
+			if ($.sampling[i] && (i==0 || !$.sampling[i-1]))
+			{
+				/*find end*/
+				i2=i;
+				while(++i2<np && $.sampling[i2]);
+				/*i2 is the first non-sampling point, decrement to get last good one*/
+				i2--;
+				
+				/*time span in hours*/
+				var dt = ($.stamp[i2]-$.stamp[i]);
+				
+				/*set desired time span:*/
+				var dt_goal = 0.25	/*15 minutes apart*/
+				var di = Math.round((i2-i)*dt_goal/dt);
+			}
+			else {i++;continue;}	/*if not sampling*/
+			
+			/*now add every di point in this sampling block*/
+			for (j=i;j<=i2;j+=di)
+			{
+				/*make sure we don't have repeated x values*/
+				if (x.length>0 && x[x.length-1]==$.stamp[j]) continue;
+				x.push($.stamp[j]);
+				a.push($.rate[j]);
+			}
+			
+			if (j!=i2) /*add last point*/
+				if (x.length>0 && x[x.length-1]!=$.stamp[i2])
+				{
+					x.push($.stamp[i2]);
+					a.push($.rate[i2]);
+				}
+			i=i2+1;
+		}
+
+		/*ns is number of splines*/
+		var ns=x.length-1;
+		var x0 = $.stamp[0];
+		for (var s=0;s<ns;s++) {x[s]=x[s]-x0;}
+		
+		var alpha=zerov(ns);
+		var b=zerov(ns);
+		var c=zerov(ns);
+		var d=zerov(ns);
+		var h=zerov(ns);
+
+		for (var s=0;s<ns;s++)
+		{
+		   h[s] = x[s+1]-x[s];
+		   if (h[s]<=0) console.log("XX "+s+" of "+ns);
+		}
+		
+		for (var s=1;s<ns;s++)
+		{
+			alpha[s] = (3/h[s])*(a[s+1]-a[s]) - (3/h[s-1])*(a[s]-a[s-1]);
+		}
+		
+		l=zerov(ns);
+		u=zerov(ns);
+		z=zerov(ns);
+		l[0]=1; u[0]=0; z[0]=0;
+		l[ns]=1; c[ns]=0; z[ns]=0;
+		for (var s=1;s<ns;s++)
+		{
+			l[s] = 2*(x[s+1]-x[s-1])-h[s-1]*u[s-1];
+			u[s] = h[s]/l[s];
+			z[s] = (alpha[s]-h[s-1]*z[s-1])/l[s];
+		}
+		
+		for (var s=ns-1;s>=0;s--)
+		{
+			c[s] = z[s]-u[s]*c[s+1];
+			b[s] = (a[s+1]-a[s])/h[s] - h[s]*(c[s+1]+2*c[s])/3;
+			d[s] = (c[s+1]-c[s])/(3*h[s]);
+		}
+		
+		/*evaluate splines at time stamp data*/
+		$.delta_delta = [];
+		$.eval_i=0;	/*reset*/
+		var s=0;	/*reset spline index*/
+		for (j=0;j<$.stamp.length;j++)
+		{
+			var t = $.stamp[j]- $.stamp[0];	/*time offset*/
+			if (t<x[0]) {$.delta_delta.push(0);continue;}
+			
+			while (x[s]>t || x[s+1]<t && (s++<ns));
+			
+			/*compute fractional time*/
+			var dx = (t-x[s]);///(x[s+1]-x[s]);
+				
+			var S = a[s] +b[s]*dx + c[s]*dx*dx + d[s]*dx*dx*dx;	/*value*/
+			S = b[s] + 2*c[s]*dx + 3*d[s]*dx*dx;	/*derivative*/
+			//if (!$.sampling[j]) S=0;
+			
+			$.delta_delta.push(S);			
+		}
+	}
+	
+	/*evaluates data yd at x*/
+	Channel.prototype.eval = function(xd,yd,x)
+	{	
+		var i= this.eval_i;
+		var rewound=false;
+		
+		while (true)
+		{
+			if (x>=xd[i] && x<=xd[i+1])
+			{
+				/*linear interpolation*/
+				
+				var val = yd[i] + ((yd[i+1]-yd[i])/(xd[i+1]-xd[i])) * (x-xd[i]);
+				this.eval_i=i;
+				return val;
+				
+			}
+			else if (x>xd[i]) i++;
+			else if (x<xd[i]) i--;
+			
+			/*rewind once, second time return limits*/
+			if (i<0) {if (rewound) return yd[0]; rewound=true;i=xd.length-2;}
+			if (i>=xd.length-1) {if (rewound) return yd[xd.length-1]; rewound=true;i=0;}
+		}
+	}
+	  
+	 this.stamp0 = -1;	/*default value, not set*/
+	 this.stamp = [];
+	 this.temperature = [];
+	 this.voltage = [];
+	 this.frequency = [];
+	 this.raw_rate = [];
+	 this.rate = [];
+	 this.delta_delta = [];
+	 this.comment = [];
+	 this.xlims =[1e36,-1e36];
+	 this.ylims = [1e36,-1e36];
+	 this.name = name;
+}
+
+function zerov(n)
+{
+	var v =[];
+	for (var i=0;i<n;i++) v.push(0);
+	return v;
+}
+
+/*file reader*/
+var channels = [];
+var types = ["f","r","d","v","t"];
+var last_view=[];
+
+/*helper function to set values if input is finite*/
+function setIfFinite(id,value) {if (isFinite(value)) document.getElementById(id).value=value;}
+
+/*restores previous X range*/
+function undoView()
+{
+ if (last_view.length<=1) return;
+ 
+  var last = last_view[last_view.length-2];
+  var xrange = last[0];
+  var yrange = last[1];
+  var dx = last[2];
+  var dy = last[3];
+  
+  suppress_draw=true;  /*draw gets called when range inputs change*/
+  setIfFinite("xmin1",xrange[0][0]);
+  setIfFinite("xmax1",xrange[0][1]);
+  setIfFinite("dx1",dx[0]);
+  setIfFinite("xmin2",xrange[1][0]);
+  setIfFinite("xmax2",xrange[1][1]);
+  setIfFinite("dx2",dx[1]);
+
+  setIfFinite("ymin1",yrange[0][0]);
+  setIfFinite("ymax1",yrange[0][1]);
+  setIfFinite("dy1",dy[0]);
+  setIfFinite("ymin2",yrange[1][0]);
+  setIfFinite("ymax2",yrange[1][1]);
+  setIfFinite("dy2",dy[1]);
+    
+  suppress_draw=false;
+  draw();
+  last_view = last_view.slice(0,last_view.length-2);
+}
+	
+/*main "draw" function, adds selected channels to canvas*/
+var suppress_draw = false;
+function draw()
+{
+	if (suppress_draw==true) return;
+	
+	/*hide buttons*/
+	document.getElementById("c_ui").classList.add("hidden");
+	
+	xlims = [[],[]];	dx = [];
+	xlims[0][0] = parseFloat(document.getElementById("xmin1").value);
+	xlims[0][1] = parseFloat(document.getElementById("xmax1").value);
+	dx[0] = parseFloat(document.getElementById("dx1").value);
+	
+	xlims[1][0] = parseFloat(document.getElementById("xmin2").value);
+	xlims[1][1] = parseFloat(document.getElementById("xmax2").value);
+	dx[1] = parseFloat(document.getElementById("dx2").value);
+	
+	ylims = [[],[]];	dy = [];
+	ylims[0][0] = parseFloat(document.getElementById("ymin1").value);
+	ylims[0][1] = parseFloat(document.getElementById("ymax1").value);
+	dy[0] = parseFloat(document.getElementById("dy1").value);
+	
+	ylims[1][0] = parseFloat(document.getElementById("ymin2").value);
+	ylims[1][1] = parseFloat(document.getElementById("ymax2").value);
+	dy[1] = parseFloat(document.getElementById("dy2").value);
+	
+	var hasX1=false;hasX2=false;
+	var hasY1=false;hasY2=false;
+	for (var i=0;i<channels.length;i++)
+	{
+		channels[i].view={};
+		for (var t=0;t<types.length;t++)
+		{
+			var type=types[t];
+			var data = {};
+			data["line"] = document.getElementById("L"+i+type).checked;
+			data["markers"] = document.getElementById("M"+i+type).checked;
+			data["x"]=parseInt(document.querySelector('input[name="'+"X"+i+type+'"]:checked').value);
+			data["y"]=parseInt(document.querySelector('input[name="'+"Y"+i+type+'"]:checked').value);
+			data["color"]=document.getElementById("C"+i+type).value;
+			channels[i].view[type]=data;
+			
+			if (data["x"]==0) hasX1=true; if (data["x"]==1) hasX2=true;
+			if (data["y"]==0) hasY1=true; if (data["y"]==1) hasY2=true;
+		}
+	}
+	
+	/*reset view*/
+	c_main.reset();
+	
+	/*plot axis*/
+	if (hasX1) c_main.add_axisX(xlims,dx,0,"Elapsed Time (hrs)");
+	if (hasY1) c_main.add_axisY(ylims,dy,0);
+	if (hasX2) c_main.add_axisX(xlims,dx,1);	
+	if (hasY2) c_main.add_axisY(ylims,dy,1);
+	
+	/*save data range for view undo*/
+	last_view.push([xlims,ylims,dx,dy]);
+	if (last_view.length>100) last_view=last_view.slice(last_view.length-100); /*up to 100 views*/
+	
+	for (var i=0;i<channels.length;i++)
+	{
+		var channel = channels[i];
+		var X = channel.stamp;
+		
+		for (var t=0;t<types.length;t++)
+		{
+			var type=types[t];
+			var data;
+			switch (type)
+			{
+				case "f": data=channel.frequency;break;
+				case "r": data=channel.rate;break;
+				case "d": data=channel.delta_delta;break;
+				case "v": data=channel.voltage;break;
+				case "t": data=channel.temperature;break;
+			}
+		
+			var view = channel.view[type];
+			if (view.line) c_main.add_line(X,data,xlims[view.x],ylims[view.y],view.color);
+			if (view.markers) c_main.add_markers(X,data,xlims[view.x],ylims[view.y],view.color);
+		}		
+	}
+	c_main.draw();
+}
+
+/*formats label*/
+function formatLabel(v) {
+	var va=Math.abs(v);
+	if (va<1) return v.toPrecision(2);
+	else if (va<100) return v.toFixed(1);
+	else if (va<100000) return v.toFixed(0);
+	else return v.toPrecision(2);
+}
+
+/*returns min max for data*/
+function range(f)
+{
+	var r = [f[0],f[0]];
+	for (var i=0;i<f.length;i++)
+	{
+		if (f[i]<r[0]) r[0]=f[i];
+		if (f[i]>r[1]) r[1]=f[i];
+	}
+	
+	return r;
+}
+
+/*** PLOTTING ***/
+/*translates from X coordinates to screen coordinates*/
+
+/*plotting in an associated canvas*/
+var Canvas = function(id)
+{
+	var p=Canvas.prototype;
+	p.init = function(id) {
+		this.c=document.getElementById(id);
+		this.ctx = this.c.getContext("2d");
+		this.w = this.c.width;
+		this.h = this.c.height;
+		this.PADDING_LEFT=60,
+		this.PADDING_RIGHT=50,
+		this.PADDING_TOP=20,
+		this.PADDING_BOTTOM=25;	
+		this.reset();
+	}
+	
+	p.XtoS =function(x,xlims){$=this;return $.PADDING_LEFT+($.w-$.PADDING_LEFT-$.PADDING_RIGHT)*(x-xlims[0])/(xlims[1]-xlims[0]);}
+	p.YtoS = function(y,ylims){$=this;return $.PADDING_BOTTOM+($.h-$.PADDING_BOTTOM-$.PADDING_TOP)*(y-ylims[0])/(ylims[1]-ylims[0]);}
+	p.StoX = function(x,xlims){$=this;return xlims[0]+ (x-$.PADDING_LEFT)/($.w-$.PADDING_LEFT-$.PADDING_RIGHT)*(xlims[1]-xlims[0]);}
+	
+	p.clear = function() {
+		this.ctx.fillStyle="#FFF";
+		this.ctx.fillRect(0,0,this.w,this.h);
+	}
+	
+	/*drawing support*/
+	p.reset = function()
+	{
+		var $=this;
+		$.xa=[];
+		$.ya=[];
+		$.lines=[];
+		$.markers=[];
+	}
+	
+	p.add_axisX = function(xlims2,dx2,id,title)
+	{
+		var $=this;
+		$.xa[id]={xlims2:xlims2,dx2:dx2,id:id,title:title};
+	}
+	
+	p.add_axisY = function(ylims2,dy2,id)
+	{
+		var $=this;
+		$.ya[id]={ylims2:ylims2,dy2:dy2,id:id};
+	}
+		
+	p.add_line = function(x,y,xlims,ylims,strokeStyle)
+	{
+		var $=this;
+		$.lines.push({x:x,y:y,xlims:xlims,ylims:ylims,strokeStyle:strokeStyle});
+	}
+	
+	p.add_markers = function(x,y,xlims,ylims,strokeStyle)
+	{
+		var $=this;
+		$.markers.push({x:x,y:y,xlims:xlims,ylims:ylims,strokeStyle:strokeStyle});
+	}
+	
+	p.draw = function()
+	{
+		var $=this;
+		var ctx=this.ctx;
+		$.clear();
+		
+		/*add axis*/
+		if (typeof($.xa[0])!="undefined") $.axisX($.xa[0].xlims2,$.xa[0].dx2,$.xa[0].id);
+		if (typeof($.xa[1])!="undefined") $.axisX($.xa[1].xlims2,$.xa[1].dx2,$.xa[1].id);
+		if (typeof($.ya[0])!="undefined") $.axisY($.ya[0].ylims2,$.ya[0].dy2,$.ya[0].id);
+		if (typeof($.ya[1])!="undefined") $.axisY($.ya[1].ylims2,$.ya[1].dy2,$.ya[1].id);
+		
+		/*set clip*/
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect($.PADDING_LEFT,$.PADDING_BOTTOM,$.w-($.PADDING_LEFT+$.PADDING_RIGHT),
+					$.h-($.PADDING_TOP+$.PADDING_BOTTOM));
+		ctx.clip();	
+		
+		/*plot lines*/
+		for (var i=0;i<$.lines.length;i++)
+		{	
+			var l=$.lines[i];
+			$.xy(l.x,l.y,l.xlims,l.ylims,l.strokeStyle);
+		}
+		
+		/*repeat for markers*/
+		for (var i=0;i<$.markers.length;i++)
+		{	
+			var l=$.markers[i];
+			$.plot_markers(l.x,l.y,l.xlims,l.ylims,l.strokeStyle);
+		}
+		
+		ctx.restore();
+		
+		$.image_data = ctx.getImageData(0, 0, $.w, $.h);
+	}
+	
+	
+	/*makes XY plot*/
+	p.xy = function(x,y,xlims,ylims,strokeStyle)
+	{
+		var ctx = this.ctx;
+		var $ = this;
+	
+		ctx.strokeStyle=strokeStyle;
+
+		/*some browsers lack this function*/
+		//if (!ctx.setLineDash) {ctx.setLineDash = function () {/*do nothing*/} }	
+		//ctx.setLineDash([10,5]);
+		
+		ctx.beginPath();
+		var first = true;
+		for (var i=0;i<x.length;i++)
+		{
+			if (x[i]<xlims[0] || x[i]>xlims[1]) continue;
+			
+			if (first)
+			{
+				ctx.moveTo($.XtoS(x[0],xlims),$.YtoS(y[0],ylims));
+				first=false;
+			}
+		
+			ctx.lineTo($.XtoS(x[i],xlims),$.YtoS(y[i],ylims));	
+		}
+			
+		ctx.lineWidth=2;
+		ctx.stroke();	
+			
+		//ctx.setLineDash([0]);
+	}
+
+	/*plots circles for points P*/
+	p.plot_markers = function(x,y,xlims,ylims,strokeStyle)
+	{
+		var ctx = this.ctx;
+		var $=this;
+	
+		ctx.strokeStyle = strokeStyle;
+		ctx.fillStyle = 'white';
+		
+		for (var i=0;i<x.length;i++)
+		{
+			var sx = $.XtoS(x[i],xlims);
+			var sy = $.YtoS(y[i],ylims);	
+			ctx.beginPath();
+			ctx.arc(sx, sy, 3, 0, 2 * Math.PI, false);
+			ctx.fill();
+			ctx.lineWidth = 1;
+			ctx.stroke();
+		}
+	}
+
+	p.axisX = function(xlims2,dx2,id)
+	{
+		var xlims = xlims2[id];
+		var dx = dx2[id];
+		if (xlims[0]>=xlims[1] || dx<=0) return;
+		
+		var $=this;
+		var ctx = this.ctx;
+		ctx.strokeStyle="#bbb";
+		if (id==1)	ctx.strokeStyle="#caa";
+		
+		ctx.lineWidth=1;
+		ctx.beginPath();
+		
+		for (var x =xlims[0];x<=xlims[1];x+=dx)
+		{
+			ctx.moveTo(Math.floor($.XtoS(x,xlims))+0.5,$.PADDING_BOTTOM);
+			ctx.lineTo(Math.floor($.XtoS(x,xlims))+0.5,$.h-$.PADDING_TOP);	
+			ctx.stroke();
+		}
+		
+		$.xLabels(xlims2,dx2,id);
+	}
+
+	p.axisY=function(ylims2,dy2,id)
+	{
+		var ylims = ylims2[id];
+		var dy = dy2[id];
+		if (ylims[0]>=ylims[1] || dy<=0) return;
+		
+		var $=this;
+		var ctx=this.ctx;
+		ctx.strokeStyle="#bbb";
+		if (id==1)
+			ctx.strokeStyle="#daa";
+		ctx.lineWidth=1;
+		ctx.beginPath();
+		
+		for (var y =ylims[0];y<=ylims[1];y+=dy)
+		{
+			ctx.moveTo($.PADDING_LEFT,Math.floor($.YtoS(y,ylims))+0.5);
+			ctx.lineTo($.w-$.PADDING_RIGHT,Math.floor($.YtoS(y,ylims))+0.5);	
+			ctx.stroke();
+		}
+		
+		$.yLabels(ylims2,dy2,id);
+	}
+
+	p.xLabels=function(xlims2,dx2,id)
+	{
+		var ctx = this.ctx;
+		var $=this;
+		ctx.save();
+		ctx.scale(1,-1);
+		ctx.translate(0,-$.h);
+		ctx.font="8pt monospace";
+		ctx.fillStyle="#000";
+
+		var xlims = xlims2[id];
+		var dx = dx2[id];
+		if (xlims[0]>=xlims[1] || dx<=0) return;
+		for (var x=xlims[0];x<=xlims[1];x+=dx)
+		{
+			var text = formatLabel(x);
+			var text_w = ctx.measureText(text).width;	
+			if (id==0) pos_y= $.h-$.PADDING_BOTTOM+10;
+			else if(id==1) pos_y = $.PADDING_TOP;
+			ctx.fillText(text,$.XtoS(x,xlims)-0.5*text_w,pos_y);
+		}
+		
+		/*show title if any*/
+		if (id==0 && $.xa[0].title)
+		{
+		   var text = $.xa[0].title;
+		   var text_w = ctx.measureText(text).width;
+		   ctx.fillText(text, $.PADDING_LEFT + 0.5*($.w-$.PADDING_LEFT-$.PADDING_RIGHT-text_w), $.h-2)
+		}
+		
+		/*also show the date/time for the start of data*/
+		if (id==0)
+		{
+			var text= (new Date((channels[0].stamp0+xlims[0])*3600*1000).toLocaleString()).replace(",","");
+			var text_w = ctx.measureText(text).width;
+			ctx.fillStyle="#888";
+			var pos_x = $.PADDING_LEFT-0.5*text_w;
+			if (pos_x<2) pos_x=2;
+			ctx.fillText(text, pos_x, $.h-2)
+		}
+		
+		ctx.restore();
+	}
+		
+	p.yLabels =function(ylims2,dy2,id)
+	{
+		var ctx=this.ctx;
+		var $=this;
+		ctx.save();
+		ctx.scale(1,-1);
+		ctx.translate(0,-$.h);
+		ctx.font="8pt monospace";
+		ctx.fillStyle="#000";
+		
+		var ylims = ylims2[id];
+		var dy = dy2[id];
+		if (ylims[0]>=ylims[1] || dy<=0) return;
+		for (var y=ylims[0];y<=ylims[1];y+=dy)
+		{
+			var text = formatLabel(y);
+			var text_w = ctx.measureText(text).width;
+			var text_h = parseInt(ctx.font);
+			if (id==0) pos_x=50-text_w;
+			else if (id==1) pos_x=$.w-$.PADDING_RIGHT;
+			ctx.fillText(text,pos_x,$.h-($.YtoS(y,ylims)-0.5*text_h));
+		}
+		ctx.restore();
+	}
+	
+	/*used to resize the canvas*/
+	p.resize = function(w,h)
+	{
+		var $=this;
+		var c=$.c;
+		var ctx=$.ctx;
+		c.width = w;
+		c.height = h;
+		c.style.width = c.width+'px';
+		c.style.height = c.height+'px';
+		$.w=c.width;
+		$.h=c.height;
+		
+		$.ctx.translate(0,h);
+		$.ctx.scale(1,-1);
+		$.draw();	
+	}	
+
+	this.init(id);
+
+}	/*CANVAS*/
+	
+function generateOutput()
+{
+	var body = "";
+	var stamp = channels[0].stamp;
+	var stamp0 = channels[0].stamp0;
+	
+	body+="\t\t";
+	for (var i=0;i<channels.length;i++)
+	{
+		body+=channels[i].name+"\t\t\t\t\t\t";
+	}
+	body+="\n";
+	
+	/*header*/
+	body += "TimeStamp\tHours";
+	for (var i=0;i<channels.length;i++)
+	{
+		body+="\tTemperature";
+		body+="\tVoltage";
+		body+="\tFrequency";
+		body+="\tRawRate";
+		body+="\tSmoothRate";
+		body+="\tDeltaDelta";
+	}
+	body+="\n";
+	
+	for (var i=0;i<stamp.length;i++)
+	{
+		body += (new Date((stamp[i]+stamp0)*3600*1000).toLocaleString()).replace(",","");
+		body +=  "\t"+((stamp[i])*3600).toFixed(2);	/*hours from start*/
+		for (var c=0;c<channels.length;c++)
+		{
+			var channel = channels[c];
+			body += "\t"+channel.temperature[i].toFixed(2);
+			body += "\t"+channel.voltage[i].toFixed(2);
+			body += "\t"+channel.frequency[i].toFixed(2);
+			body += "\t"+channel.raw_rate[i].toFixed(2);
+			body += "\t"+channel.rate[i].toFixed(2);
+			body += "\t"+channel.delta_delta[i].toFixed(2);
+		}
+		if (channels[0].comment[i])
+			body+="\t"+channels[0].comment[i];
+		body+="\n";		
+	}
+		
+	document.getElementById("download").innerHTML="Download <a id=\"link\" href=\"\" download=\"output.txt\">output.txt</a>";
+	var e = document.getElementById("link");
+	e.setAttribute('href',"data:text/plain;charset=utf-8,"+encodeURIComponent(body));
+	
+}
+
+function generateTGAOutput(T,dfdT)
+{
+	var body = "Temperature\tdf/dT\n";
+	
+	/*header*/
+	for (var i=0;i<T.length;i++)
+	{
+		body += T[i]+"\t"+dfdT[i]+"\n";
+	}
+	document.getElementById("download_tga").innerHTML="Download <a id=\"tga_link\" href=\"\" download=\"tga.txt\">tga.txt</a>";
+	var e = document.getElementById("tga_link");
+	e.setAttribute('href',"data:text/plain;charset=utf-8,"+encodeURIComponent(body));
+}
+
+/*------- FILE READING ------*/
+  function handleFileSelect(evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+	
+	evt.target.style.background="white";
+	
+	var files = evt.dataTransfer.files; 
+
+	/*clear channels*/
+	channels = [];
+	log_ele.innerHTML="";
+	
+    /*read only first file*/
+	f=files[0];
+	
+	/*parse file*/
+	var reader = new FileReader();
+	
+	// Closure to capture the file information.
+	reader.onload = (function(file,target) {
+		return function(e) {
+		//if (target.id=="c")
+		{
+			parse(e.target.result);
+			draw();
+			generateOutput();			
+		}
+		
+		document.getElementById("drop").innerHTML="Loaded: "+file.name;	
+		console.log("Done reading "+file.name);		
+         };
+      })(f,evt.target);
+	  
+	var data = reader.readAsText(f);
+    
+  }
+
+  function handleDragOver(evt) {
+    evt.dataTransfer.dropEffect = 'copy'; 
+	evt.stopPropagation();
+    evt.preventDefault();
+	evt.currentTarget.style.background="yellow";
+    }
+
+	function handleDragLeave(evt) {
+	/*evt.target seems to be the new element over the mouse, currentTarget is the original*/
+		evt.currentTarget.style.background="white";
+	}
+
+
+/*vector helper functions*/
+function sub(v1,v2){return [v1[0]-v2[0], v1[1]-v2[1]];}
+function mag(v1){return Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1]);}
+function dot(v1,v2){return (v1[0]*v2[0]+v1[1]*v2[1]);}
+
+/*finds index, returns offset from first column (seconds)*/
+function findIndex(name,pieces)
+{
+	for (var i=1;i<pieces.length;i++)
+	{
+		if (pieces[i].toLowerCase() == name.toLowerCase()) return i-1;
+	}
+	return -1;
+}
+
+/*parses the primary file*/
+function parse(buffer)
+{
+	if (buffer.substring(0,5)=="M2000") 
+		parseQCMResearch(buffer);
+	else 
+		parseCrystalTek(buffer);
+		
+}
+
+/*parses CrystalTek log file*/
+function parseCrystalTek(buffer)
+{
+	console.log("Parsing CrystalTek file");
+	/*split into lines*/
+	var lines = buffer.split(/[\r\n]/);	
+	
+	var header="";
+	var comment="";
+	var date0;	/*header date/time in Date format*/
+	var stamp0;	/*as number of milliseconds from zero time*/
+	var num_cols;
+	var channel_index = [];
+	var temp_offset=-1;
+	var voltage_offset=-1;
+	var frequency_offset=-1;
+	var rate_offset=-1;
+	var num_cols = -1;
+	
+	/*split second line to get start time and date*/
+	var piece = lines[2].trim().split(/[\s]+/);
+		
+	/*split into pieces*/
+	var d = piece[7].split('-');
+	var year = parseInt(d[2]);
+	var month = parseInt(d[0]);
+	var day = parseInt(d[1]);
+	/*date is 0-11 for some odd reason*/
+	date0 = new Date(year,month-1,day);
+	
+	var t = piece[3].split(':');
+	date0.setHours(t[0]);
+	date0.setMinutes(t[1]);
+	date0.setSeconds(t[2]);
+	stamp0 = date0.getTime()/(1000*3600);	/*converted from milliseconds to hours*/
+	log("Processing new timestamp: "+date0.toString());			
+	
+	/*this data format seems to support only one channel*/
+	channels =[];
+	channels.push(new Channel("CrystalTek"));
+	frequency_offset = 1;
+	temp_offset=2;
+	
+	
+	/*the test data starts on line 3*/
+	for (var l=3;l<lines.length;l++)
+	{
+		var piece = lines[l].trim().split(/[\s]+/);
+		if (isNumber(piece[0]))
+		{
+			var stamp = parseFloat(piece[0])/(60)+stamp0;	/*log file stamp is in minutes, convert to hours*/
+			
+			/*data!*/
+			for (var i=0;i<channels.length;i++)
+			{
+				var channel = channels[i];
+				var start_index = 0;
+				
+				var temp = (temp_offset>=0) ? parseFloat(piece[start_index+temp_offset]) : 0;
+				var voltage = (voltage_offset>=0) ? parseFloat(piece[start_index+voltage_offset]) : 0;
+				var frequency = (frequency_offset>=0) ? parseFloat(piece[start_index+frequency_offset]) : 0;
+				var rate = (rate_offset>=0) ? parseFloat(piece[start_index+rate_offset]) : 0 ;
+				channel.append(stamp,temp,voltage,frequency,rate);
+			}
+			
+			/*add comment if we have one*/
+			if (comment)
+			{
+				channels[0].addComment(stamp,comment);
+				comment="";
+			}
+		}
+	}
+	
+	for (var i=0;i<channels.length;i++)
+	{
+		channels[i].process();
+	}
+	
+	/*add channels to select list*/
+	var ele = document.getElementById("table_channels");
+	for (var i=0;i<channels.length;i++)
+	{
+		var name = channels[i].name;
+		addChannel(ele,i+"f",name+" Freq (Hz)");
+		addChannel(ele,i+"r",name+" Rate (Hz/hr)");
+		addChannel(ele,i+"d",name+" DelDel (Hz/hr/hr)");
+		addChannel(ele,i+"v",name+" Voltage (V)");		
+		addChannel(ele,i+"t",name+" Temp (C)");	
+	}
+	
+	/*enable first channel*/
+	document.getElementById("L0f").checked=true;
+	draw();
+	rescaleX(1);
+	rescaleY(1);
+}
+
+/*parses QCM Research log file*/
+function parseQCMResearch(buffer)
+{
+	console.log("Parsing QCM Research file");
+	
+	/*split into lines*/
+	var lines = buffer.split(/[\r\n]/);	
+	
+	var header="";
+	var comment="";
+	var date0;	/*header date/time in Date format*/
+	var stamp0;	/*as number of milliseconds from zero time*/
+	var num_cols;
+	var channel_index = [];
+	var temp_offset=-1;
+	var voltage_offset=-1;
+	var frequency_offset=-1;
+	var rate_offset=-1;
+	var num_cols = -1;
+	
+	/*the test data starts on line 3*/
+	for (var l=0;l<lines.length;l++)
+	{
+		var piece = lines[l].trim().split(/[\t]+/);
+		
+		/*is this header info?*/
+		if (piece[0] == "Date:")
+		{
+			/*split into pieces*/
+			var d = piece[1].split('-');
+			var year = parseInt(d[2]);
+			var month = parseInt(d[0]);
+			var day = parseInt(d[1]);
+			/*date is 0-11 for some odd reason*/
+			date0 = new Date(year,month-1,day);
+		}
+		else if (piece[0] == "Time:")
+		{
+			var t = piece[1].split(':');
+			date0.setHours(t[0]);
+			date0.setMinutes(t[1]);
+			date0.setSeconds(t[2]);
+			stamp0 = date0.getTime()/(1000*3600);	/*converted from milliseconds to hours*/
+			log("Processing new timestamp: "+date0.toString());			
+		}
+		else if(piece[0] == "Channels>")
+		{
+			var msg="";
+			
+			for (var i=1;i<piece.length;i++)
+			{
+				var name = piece[i];
+				
+				/*do we already have this channel*/
+				var id = channel_index[name];
+				if (typeof(id)=="undefined")
+				{
+					/*add new channel*/
+					channels.push(new Channel(name));
+				}
+				
+				/*update LUT*/
+				channel_index[name]=i-1;	
+				msg+="'"+name+"' ";			
+			}
+			
+			log("Found channels for "+msg);
+		}
+		else if  (piece[0] == "Seconds")
+		{
+			/*get indices*/
+			temp_offset=findIndex("Temperature",piece);
+			voltage_offset=findIndex("Voltage",piece);
+			frequency_offset=findIndex("Frequency",piece);			
+			rate_offset=findIndex("FreqRate",piece);	
+			
+			/*number of columns, seconds + (# of channels)*num_cols*/
+			num_cols = (piece.length-1)/channels.length;
+		}
+		else if (piece[0]=="Comment")
+		{
+			for (var i=1;i<piece.length;i++)
+				comment+=piece[i]+" ";
+		}
+		else if (isNumber(piece[0]))
+		{
+			var stamp = parseFloat(piece[0])/(3600)+stamp0;	/*log file stamp is in seconds, convert to hours*/
+			
+			/*data!*/
+			for (var i=0;i<channels.length;i++)
+			{
+				var channel = channels[i];
+				var start_index = 1+num_cols*channel_index[channel.name];
+				
+				var temp = (temp_offset>=0) ? parseFloat(piece[start_index+temp_offset]) : 0;
+				var voltage = (voltage_offset>=0) ? parseFloat(piece[start_index+voltage_offset]) : 0;
+				var frequency = (frequency_offset>=0) ? parseFloat(piece[start_index+frequency_offset]) : 0;
+				var rate = (rate_offset>=0) ? parseFloat(piece[start_index+rate_offset]) : 0 ;
+				channel.append(stamp,temp,voltage,frequency,rate);
+			}
+			
+			/*add comment if we have one*/
+			if (comment)
+			{
+				channels[0].addComment(stamp,comment);
+				comment="";
+			}
+		}
+	}
+	
+	for (var i=0;i<channels.length;i++)
+	{
+		channels[i].process();
+	}
+	
+	/*add channels to select list*/
+	var ele = document.getElementById("table_channels");
+	for (var i=0;i<channels.length;i++)
+	{
+		var name = channels[i].name;
+		addChannel(ele,i+"f",name+" Freq (Hz)");
+		addChannel(ele,i+"r",name+" Rate (Hz/hr)");
+		addChannel(ele,i+"d",name+" DelDel (Hz/hr/hr)");
+		addChannel(ele,i+"v",name+" Voltage (V)");		
+		addChannel(ele,i+"t",name+" Temp (C)");	
+	}
+	
+	/*enable first channel*/
+	document.getElementById("L0f").checked=true;
+	draw();
+	rescaleX(1);
+	rescaleY(1);
+	
+}
+
+/*adds channel to field set*/
+var colors=["#000000","#ff0000","#00ff00","#ffff00","#0000ff","#ff00ff","#00ffff","#800000","#008000","#808080","#000080","#800080","#008080"];
+var cur_color=0;
+function addChannel(t,id,text)
+{
+	var tr = t.insertRow();
+	var cell1 = tr.insertCell();
+	var cell2 = tr.insertCell();
+	
+	cell1.innerHTML = text;
+	cell2.innerHTML = '&#x2015;<input type="checkbox" id="L'+id+'">'+
+	'&#x25cf;<input type="checkbox" id="M'+id+'">'+
+ '<input type="radio" name="X'+id+'" value="0" checked>X1<input type="radio" name="X'+id+'" value="1">X2 <input type="radio" name="Y'+id+'" value="0" checked>Y1<input type="radio" name="Y'+id+'" value="1">Y2'+ '<input type="color" id="C'+id+'" value="'+colors[cur_color]+'">';	
+	if(++cur_color>colors.length-1) cur_color=0;
+ 
+ /*add event listeners*/
+ document.getElementById("L"+id).addEventListener('change',(function(){draw();}),false);
+ document.getElementById("M"+id).addEventListener('change',(function(){draw();}),false);
+ document.getElementById("C"+id).addEventListener('change',(function(){draw();}),false);	
+ 
+ /*converts NodeList to array*/
+ var eles = Array.prototype.slice.call(document.getElementsByName("X"+id));
+ eles = eles.concat(Array.prototype.slice.call(document.getElementsByName("Y"+id)));
+ for(var i = 0; i<eles.length; i++) eles[i].addEventListener('change',(function(){draw();}),false);
+ 
+}
+
+/*per http://stackoverflow.com/questions/18082/validate-decimal-numbers-in-javascript-isnumeric*/
+function isNumber(val) {return isFinite(parseFloat(val));}
+
+</script>
+
+</body>
+
+</html>
+
