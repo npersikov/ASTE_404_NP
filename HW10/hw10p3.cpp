@@ -213,8 +213,8 @@ int main()
     // int ni = 51;   // number of nodes
   	// int nj = 26;
 
-    int ni = 5;   // number of nodes
-  	int nj = 5;
+    int ni = 51;   // number of nodes
+  	int nj = 26;
 
   	double x0 = 0.1;  // origin
   	double y0 = 0.1;
@@ -228,130 +228,167 @@ int main()
     double dt = 0.01;
 
     double D = 0.1;
+    double inlet_size = 0.04;
+    double outlet_inner_radius = 0.1;
+    double outlet_outer_radius = 0.2;
 
     vector<double> g(nn);
 
-    FiveBandedMatrix A(nn, 5); // The spacing should be five because of the nature of this system
-    FiveBandedMatrix lhs(nn, 5);
+    FiveBandedMatrix A(nn, ni); // The spacing should be five because of the nature of this system
+    FiveBandedMatrix lhs(nn, ni);
 
-    // for(int j = 0; j < nj; j++)
-    // {
-    //     for(int i = 0; i < ni; i++)
-    //     {
-    //         int n = j*ni + i;
-    //         // if(i == 0 || j == 0)
-    //         // {
-    //         //     A(n,n) = 1.0;
-    //         //     g[n] = n/(double)nn;
-    //         // }
-    //         // else if(i == nj - 1)
-    //         // {
-    //         //     A(n,n) = 1.0;
-    //         //     A(n,n-1) = -1.0;
-    //         //     g[n] = 0.0;
-    //         // }
-    //         // else if(j == nj - 1)
-    //         // {
-    //         //     A(n,n) = 1.0/dy;
-    //         //     A(n,n-ni) = -1.0/dy;
-    //         //     g[n] = 0.2;
-    //         // }
-    //         // else
-    //         // {
-    //         //     A(n,n-ni) = D*dt/(4*dy*dy);
-    //         //     A(n,n-1) = D*dt/(4*dy*dy);
-    //         //     A(n,n) = 1 - 2*D*dt/(4*dx*dx) - 2*D*dt/(4*dy*dy);
-    //         //     A(n,n+1) = D*dt/(4*dx*dx);
-    //         //     A(n,n+ni) = D*dt/(4*dy*dy);
-    //         //     g[n] = 0.0;
-    //         // }
-
-    //         A(n,n-ni) = 1;
-    //         A(n,n-1) = 2;
-    //         A(n,n) = 3;
-    //         A(n,n+1) = 4;
-    //         A(n,n+ni) = 5;
-    //     }
-    // }
-
-    // Fill in the A matrix and b vector. Note: dy is dz and dx is dr
-    // for(int n = 0; n < nn; n++)
-    // {
-    //     A(n,n-ni) = -D*dt/(2*dy*dy);
-    //     A(n,n-1) = -D*dt/(2*dx*dx);
-    //     A(n,n) = 1 + D*dt/(2*x*dx) + D*dt/(dx*dx) + D*dt/(dy*dy);
-    //     A(n,n+1) = -D*dt/(2*x*dx) - D*dt/(2*dx*dx);
-    //     A(n,n+ni) = -D*dt/(2*dy*dy);
-    //     cout << n << endl;
-    // }
-
-    // Fill in the A matrix and b vector. Note: dy is dz and dx is dr
-    double x = 0.0;
-    vector<double> test(25);
-    double* dotprod = new double[25];
+    // Fill in the A matrix and b vector. Note: dy is dr and dx is dz
+    // j is indexing r, i is indexing z
+    double z = 0.0;
+    double r = 0.0;
+    // vector<double> test(25);
+    vector<double> n_vector(nj*ni);
+    // double* dotprod = new double[25];
     for(int j = 0; j < nj; j++)
     {
         for(int i = 0; i < ni; i++)
         {
             int n = j*ni + i;
-            x = (double)(j)*dx + dx/2;
+            z = (double)i*dx; // This is actually z
+            r = (double)j*dy + dy/2; // This is actually rho/r
 
-            A(n,n-ni) = -D*dt/(2*dy*dy);
-            A(n,n-1) = -D*dt/(2*dx*dx);
-            A(n,n) = 1 + D*dt/(2*x*dx) + D*dt/(dx*dx) + D*dt/(dy*dy);
-            A(n,n+1) = -D*dt/(2*x*dx) - D*dt/(2*dx*dx);
-            A(n,n+ni) = -D*dt/(2*dy*dy);
+            n_vector[n] = 0; // All initial densities are 0 except for the boundary conditions
 
-            lhs(n,n-ni) = D*dt/(2*dy*dy);
-            lhs(n,n-1) = D*dt/(2*dx*dx);
-            lhs(n,n) = 1 - D*dt/(2*x*dx) - D*dt/(dx*dx) - D*dt/(dy*dy);
-            lhs(n,n+1) = D*dt/(2*x*dx) + D*dt/(2*dx*dx);
-            lhs(n,n+ni) = D*dt/(2*dy*dy);
+            // Neumann boundary conditions
+            if(i == 0)
+            {
+                A(n,n) = 1.0/dx;
+                A(n,n+1) = -1.0/dx;
 
-            test[n] = 1;
+                lhs(n,n) = -1.0/dx;
+                lhs(n,n+1) = 1.0/dx;
+            }
+            else if(j == 0)
+            {
+                A(n,n) = 1.0/dy;
+                A(n,n+ni) = -1.0/dy;
+
+                lhs(n,n) = -1.0/dy;
+                lhs(n,n+ni) = 1.0/dy;
+            }
+            else if(i == ni - 1)
+            {
+                A(n,n) = 1.0/dx;
+                A(n,n-1) = -1.0/dx;
+
+                lhs(n,n) = -1.0/dx;
+                lhs(n,n-1) = 1.0/dx;
+            }
+            else if(j == nj - 1)
+            {
+                A(n,n) = 1.0/dy;
+                A(n,n-ni) = -1.0/dy;
+
+                lhs(n,n) = -1.0/dy;
+                lhs(n,n-ni) = 1.0/dy;
+            }
+            else
+            {
+                A(n,n-ni) = -D*dt/(2*dx*dx);
+                A(n,n-1) = -D*dt/(2*dy*dy);
+                A(n,n) = 1 + D*dt/(2*r*dy) + D*dt/(dy*dy) + D*dt/(dx*dx);
+                A(n,n+1) = -D*dt/(2*r*dy) - D*dt/(2*dy*dy);
+                A(n,n+ni) = -D*dt/(2*dx*dx);
+
+                lhs(n,n-ni) = D*dt/(2*dx*dx);
+                lhs(n,n-1) = D*dt/(2*dy*dy);
+                lhs(n,n) = 1 - D*dt/(2*r*dy) - D*dt/(dy*dy) - D*dt/(dx*dx);
+                lhs(n,n+1) = D*dt/(2*r*dy) + D*dt/(2*dy*dy);
+                lhs(n,n+ni) = D*dt/(2*dx*dx);
+
+            }
+
+            if(i == 0 && r <= inlet_size) // If at the inlet
+            {
+                n_vector[n] = 100.0;
+            }
+            if(i == ni-1 && r >= outlet_inner_radius && r <= outlet_outer_radius) // If at the outlet
+            {
+                n_vector[n] = 0.0;
+            }
+
+            // test[n] = 1;
         }
     }
 
-    for(int rows = 0; rows < 25; rows++)
-    {
-        dotprod[rows] = A.dotRow(rows, test);
-    }
+    // for(int rows = 0; rows < 25; rows++)
+    // {
+    //     dotprod[rows] = A.dotRow(rows, test);
+    // }
 
     // Print A for debugging
-    for(int j = 0; j < nn; j++)
+    // for(int j = 0; j < nn; j++)
+    // {
+    //     for(int i = 0; i < nn; i++)
+    //     {
+    //         // cout << "error is here" << endl;
+    //         if(j-i == -ni || j-i == -1 || j-i == 0 || j-i == 1 || j-i == ni)
+    //             cout << A(j,i) << ' ';
+    //         else 
+    //             cout << '0' << ' ';
+    //     }
+    //     cout << endl;
+    // }
+
+    for(int time_step = 0; time_step < timesteps; time_step++)
     {
-        for(int i = 0; i < nn; i++)
+        cout << "Progress: " << (double)time_step/(double)timesteps*100 << "%" << endl;
+        vector<double> b(ni*nj);
+        // Take the dot product of the original n vector and its corresponding matrix
+        // to get the actual LHS vector b
+        for(int rows = 0; rows < ni*nj; rows++)
         {
-            // // cout << "error is here" << endl;
-            // if(j-i == -ni || j-i == -1 || j-i == 0 || j-i == 1 || j-i == ni)
-            //     cout << A(j,i) << ' ';
-            // else 
-            //     cout << '0' << ' ';
+            b[rows] = lhs.dotRow(rows, n_vector);
         }
-        cout << dotprod[j] << endl;
+
+        // Solve the system for this time step and update the n vector
+        n_vector = solveGS(A,b);
+
+        // Keep applying the boundary conditions
+        for(int j = 0; j < nj; j++)
+        {
+            for(int i = 0; i < ni; i++)
+            {
+                int n = j*ni + i;
+                z = (double)i*dx; // This is actually z
+                r = (double)j*dy + dy/2; // This is actually rho/r
+
+                if(i == 0 && r <= inlet_size) // If at the inlet
+                {
+                    n_vector[n] = 100;
+                }
+                if(i == ni-1 && r >= outlet_inner_radius && r <= outlet_outer_radius) // If at the outlet
+                {
+                    n_vector[n] = 0;
+                }
+
+            }
+        }
     }
 
+    /* output vti file */
+  	ofstream out("field.vti");
 
-    // vector<double> T = solveGS(A,g);
+  	out<<"<VTKFile type=\"ImageData\">\n";
+  	out<<"<ImageData WholeExtent=\"0 "<<ni-1<<" 0 "<<nj-1<<" 0 "<<0<<"\""; 
+  	out<<" Origin=\""<<x0<<" "<<y0<<" "<<0.0<<"\"";
+  	out<<" Spacing=\""<<dx<<" " <<dy<<" "<<0.0<<"\">\n";
+  	out<<"<Piece Extent=\"0 "<<ni-1<<" 0 "<<nj-1<<" 0 "<<0<<"\">\n"; 
+  	out<<"<PointData>\n";
 
-    // /* output vti file */
-  	// ofstream out("field.vti");
+	out<<"<DataArray Name=\"T\" NumberOfComponents=\"1\" format=\"ascii\" type=\"Float64\">\n";
+	for (int n=0;n<nn;n++) out<<n_vector[n]<<" ";	
+	out<<"\n</DataArray>\n";
 
-  	// out<<"<VTKFile type=\"ImageData\">\n";
-  	// out<<"<ImageData WholeExtent=\"0 "<<ni-1<<" 0 "<<nj-1<<" 0 "<<0<<"\""; 
-  	// out<<" Origin=\""<<x0<<" "<<y0<<" "<<0.0<<"\"";
-  	// out<<" Spacing=\""<<dx<<" " <<dy<<" "<<0.0<<"\">\n";
-  	// out<<"<Piece Extent=\"0 "<<ni-1<<" 0 "<<nj-1<<" 0 "<<0<<"\">\n"; 
-  	// out<<"<PointData>\n";
-
-	// out<<"<DataArray Name=\"T\" NumberOfComponents=\"1\" format=\"ascii\" type=\"Float64\">\n";
-	// for (int n=0;n<nn;n++) out<<T[n]<<" ";	
-	// out<<"\n</DataArray>\n";
-
-	// out<<"</PointData>\n";
-	// out<<"</Piece>\n";
-	// out<<"</ImageData>\n";
-	// out<<"</VTKFile>\n";
+	out<<"</PointData>\n";
+	out<<"</Piece>\n";
+	out<<"</ImageData>\n";
+	out<<"</VTKFile>\n";
 
 	// free memory
 	return 0;	// normal exit
