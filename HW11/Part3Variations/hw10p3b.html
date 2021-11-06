@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+</head>
+<body>
+
+<div class="cdiv">
+    <canvas width=600 height=600 id="canv"> </canvas>
+    <p>Press 'f' for full screen</p>
+</div>
+
+<div class="controls">
+    New Stars: <input type="text" size="4" id="input_newstars" value=50> <br>
+    Make Clusters: <input type="checkbox" id="input_clusters" checked> <br>
+    Warp Factor: <input type="range" style="width:8em" id="input_warp" value=10> <br>
+    <input type="button" id="toggle" value="start">
+</div>
+
+<style>
+    body{
+        background-color: silver;
+    }
+
+    canvas{
+        background-color: black;
+    }
+
+    div{
+        display: inline-block;
+        border-radius: 20px;
+        border: 4px solid gray;
+        padding: 1em 2em;
+        margin: 10px 40px;
+        background-color: #eeeeee;
+        vertical-align: top;
+    }
+
+    div.cdiv{
+        text-align: center;
+    }
+
+    input{height: 150%;}
+
+    input[type='checkbox']{
+        -webkit-appearance:none;
+        width:20px;
+        height: 20px;
+        background: white;
+        border-radius: 5px;
+        border:2px solid #555;
+    }
+
+    input[type='checkbox']:checked{
+        background: lime;
+    }
+
+    #toggle{
+        font-size: 1.8em;
+        color: blue;
+    }
+</style>
+
+<script>
+    // global variables
+    var canvas = document.getElementById("canv");
+    var ctx = canvas.getContext("2d");
+    var running = false; // controls whether simulation continues to run
+    var new_stars = document.getElementById("input_newstars").value; // number of stars to make at each time step
+    var make_clusters = document.getElementById("input_clusters").checked;
+    var warp_factor = 0.1*document.getElementById("input_warp").value; // rescale to 0:10
+    
+    var stars = []; // empty array to hold our stars
+    var dz = 3e-3; // integration time step
+    
+    console.log("New Stars: " + new_stars);
+    console.log("Make Clusters: "+make_clusters);
+    console.log("Warp Factor: "+warp_factor);
+    
+    // stops/starts the simulation
+    document.getElementById("toggle").addEventListener("click",function(e) {
+        if(running)
+            document.getElementById("toggle").value="start";
+        else{
+            window.requestAnimationFrame(advance);
+            document.getElementById("toggle").value="Stop";
+        }
+        running = !running; // Toggle boolean
+    }, false);
+
+    //get new values from input elements
+    document.getElementById("input_newstars").addEventListener("change",function(e) {
+        new_stars = e.target.value;
+    }, false);
+        
+    document.getElementById("input_clusters").addEventListener("change",function(e) {
+        new_clusters = e.target.checked;}, false);
+
+    document.getElementById("input_warp").addEventListener("change", function(e) {
+        warp_factor = 0.1*e.target.value; //rescale to 0 to 10
+    }, false);
+    
+    document.addEventListener("keypress", function(e) {
+        if (e.keyCode === 102) toggleFullScreen(); /*f*/
+    }, false);
+
+    function toggleFullScreen() {
+        if(!document.fullscreenElement) {
+            canvas.requestFullscreen();
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        else {
+            if (document.exitFullscreen)
+            {
+                document.exitFullscreen();
+                canvas.width = 600;
+                canvas.height = 600;
+            }
+        }
+    }
+
+    // Generates and removes stars
+    function advance()
+    {
+        var to_generate = new_stars*warp_factor;
+        while (to_generate>0) {
+            var num_stars=1; // number of new stars to make
+            if(make_clusters && Math.random()<(0.5/50))
+                num_stars = 20+80*Math.random();
+            var radius = 5*Math.random();
+            makeStars((-1+2*Math.random())*300,
+        (-1+2*Math.random())*300,1.0+0.5*Math.random(), radius, num_stars);
+            to_generate -= num_stars;
+        }
+
+        //decrease star z position by warp_factor*dz
+        for(var i=0; i<stars.length; i++) {
+            var star = stars[i];
+            star.z_old = star.z;
+            star.z -= warp_factor*dz;
+        
+            //remove stars behind us
+            if(star.z <= 0)
+                stars.splice(i,1);
+        }
+
+        draw();
+    }
+
+    function makeStars(x0, y0, z0, radius0, num)
+    {
+        for(var i=0; i < num; i++)
+        {
+            var theta = 2*Math.PI*Math.random();
+            var radius = Math.random()*radius0;
+            // var radius = Math.random()*15; // Part 3a modification
+            var x = x0 + Math.cos(theta)*radius;
+            var y = y0 + Math.sin(theta)*radius;
+            var z = z0 + 0.01*Math.random();
+
+            //set star brightness
+            var gray = Math.floor(50+(255-50)*Math.random(255));
+            r = gray; g = gray; b = gray;
+            //randomly make the star more red or blue
+            if (Math.random()<0.05) {f=0.4*Math.random(); r*=(1+f); g*=(1-f); b*=(1-f);}
+            else if (Math.random()<0.05) {f=0.4*Math.random(); r*=(1-f); g*=(1-f); b*=(1+f);}
+            
+            r = Math.floor(r); if(r > 255) r = 255;
+            g = Math.floor(g); if(g > 255) g = 255;
+            b = Math.floor(b); if(b > 255) b = 255;
+
+            color = "rgb("+r+","+g+","+b+")";
+
+            //add to array
+            stars.push({x:x,y:y,z:z, color:color});
+
+        }
+    }
+
+    //draws the stars
+    function draw()
+    {
+        // sort by z
+        stars.sort(function(a,b) {return b.z-a.z;});
+
+        //clear canvas
+        ctx.fillStyle = "black";
+        var w = canvas.width;
+        var h = canvas.height;
+        ctx.fillRect(0,0,w,h);
+
+        for(var i = 0; i < stars.length; i++)
+        {
+            var star = stars[i];
+            // Create gradient
+
+            ctx.beginPath();
+            // ctx.fillStyle = star.color;
+            var r = 0.8/(star.z*star.z);
+            if (r > 6) r = 6;
+            if (r < 0.1) r = 0.1;
+
+            ctx.moveTo(star.x+ 0.5*w, star.y+ 0.5*h);
+            ctx.lineTo(star.x/star.z_old + 0.5*w, star.y/star.z_old + 0.5*h);
+            ctx.strokeStyle = star.color;
+            ctx.stroke(); 
+
+
+            // ctx.arc(star.x/star.z_old + 0.5*w, star.y/star.z_old + 0.5*h, r, 0, 2*Math.PI);
+
+            // ctx.fill();
+        }
+
+        if(running) window.requestAnimationFrame(advance);
+    }
+
+
+
+    advance(); // plot the initial scene
+
+    </script>
+    
+
+</body>
+</html>
