@@ -234,8 +234,10 @@ int main()
 
     vector<double> g(nn);
 
-    FiveBandedMatrix A(nn, ni); // The spacing should be five because of the nature of this system
-    FiveBandedMatrix lhs(nn, ni);
+    FiveBandedMatrix A(nn, ni); // The matrix on the left hand side of the equation
+    FiveBandedMatrix lhs(nn, ni); // The matrix on the right hand side. I called it lhs because I forgot what side is left :(
+
+    // Initial condition setup below:
 
     // Fill in the A matrix and b vector. Note: dy is dr and dx is dz
     // j is indexing r, i is indexing z
@@ -254,6 +256,7 @@ int main()
 
             n_vector[n] = 0; // All initial densities are 0 except for the boundary conditions
 
+            // This section is what I am mostly confused about <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // Neumann boundary conditions
             if(i == 0)
             {
@@ -287,14 +290,16 @@ int main()
                 lhs(n,n) = -1.0/dy;
                 lhs(n,n-ni) = 1.0/dy;
             }
-            else
+            else // Should I be applying these BCs to both matrices? Should they be opposite signs, or the same? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             {
+                // I - Ddt/2*L
                 A(n,n-ni) = -D*dt/(2*dx*dx);
                 A(n,n-1) = -D*dt/(2*dy*dy);
                 A(n,n) = 1 + D*dt/(2*r*dy) + D*dt/(dy*dy) + D*dt/(dx*dx);
                 A(n,n+1) = -D*dt/(2*r*dy) - D*dt/(2*dy*dy);
                 A(n,n+ni) = -D*dt/(2*dx*dx);
 
+                // I + Ddt/2*L
                 lhs(n,n-ni) = D*dt/(2*dx*dx);
                 lhs(n,n-1) = D*dt/(2*dy*dy);
                 lhs(n,n) = 1 - D*dt/(2*r*dy) - D*dt/(dy*dy) - D*dt/(dx*dx);
@@ -303,6 +308,7 @@ int main()
 
             }
 
+            // Inlet and outlet BCs
             if(i == 0 && r <= inlet_size) // If at the inlet
             {
                 n_vector[n] = 100.0;
@@ -335,12 +341,15 @@ int main()
     //     cout << endl;
     // }
 
+    // The actual flow simulation
     for(int time_step = 0; time_step < timesteps; time_step++)
     {
         cout << "Progress: " << (double)time_step/(double)timesteps*100 << "%" << endl;
-        vector<double> b(ni*nj);
+        vector<double> b(ni*nj); // Allocate b vector in Ax = b system
+
+        // Create b vector using (I + Ddt/2*L) dot n^k
         // Take the dot product of the original n vector and its corresponding matrix
-        // to get the actual LHS vector b
+        // to get the actual RHS vector b
         for(int rows = 0; rows < ni*nj; rows++)
         {
             b[rows] = lhs.dotRow(rows, n_vector);
@@ -349,7 +358,7 @@ int main()
         // Solve the system for this time step and update the n vector
         n_vector = solveGS(A,b);
 
-        // Keep applying the boundary conditions
+        // Keep applying the boundary conditions. I should keep refreshing the inlet/outlet number densitites, right? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         for(int j = 0; j < nj; j++)
         {
             for(int i = 0; i < ni; i++)
