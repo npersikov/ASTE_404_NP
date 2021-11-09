@@ -258,52 +258,68 @@ int main()
 
             // This section is what I am mostly confused about <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // Neumann boundary conditions
+            // TODO try dirichlet only
             if(i == 0)
             {
-                A(n,n) = 1.0/dx;
-                A(n,n+1) = -1.0/dx;
+                // A(n,n) = 1.0/dx;
+                // A(n,n+1) = -1.0/dx;
 
-                lhs(n,n) = -1.0/dx;
-                lhs(n,n+1) = 1.0/dx;
+                // lhs(n,n) = 1.0/dx;
+                // lhs(n,n+1) = -1.0/dx;
+
+                // A(n,n) = 1.0;
+                // lhs(n,n) = 1.0;
+                A(n,n) = -1.0/(dy*dy);
+                lhs(n,n) = -1.0/(dy*dy);
+                 A(n,n+1) = -1.0/(dx*dx);
+                lhs(n,n+1) = -1.0/(dx*dx);
             }
             else if(j == 0)
             {
-                A(n,n) = 1.0/dy;
-                A(n,n+ni) = -1.0/dy;
+                // A(n,n) = 1.0/dy;
+                // A(n,n+ni) = -1.0/dy;
 
-                lhs(n,n) = -1.0/dy;
-                lhs(n,n+ni) = 1.0/dy;
+                // lhs(n,n) = 1.0/dy;
+                // lhs(n,n+ni) = -1.0/dy;
+                A(n,n) = 1.0;
+                lhs(n,n) = 1.0;
             }
             else if(i == ni - 1)
             {
-                A(n,n) = 1.0/dx;
-                A(n,n-1) = -1.0/dx;
+                // A(n,n) = 1.0/dx;
+                // A(n,n-1) = -1.0/dx;
 
-                lhs(n,n) = -1.0/dx;
-                lhs(n,n-1) = 1.0/dx;
+                // lhs(n,n) = 1.0/dx;
+                // lhs(n,n-1) = -1.0/dx;
+                A(n,n) = 1.0;
+                lhs(n,n) = 1.0;
             }
             else if(j == nj - 1)
             {
-                A(n,n) = 1.0/dy;
-                A(n,n-ni) = -1.0/dy;
+                // A(n,n) = 1.0/dy;
+                // A(n,n-ni) = -1.0/dy;
 
-                lhs(n,n) = -1.0/dy;
-                lhs(n,n-ni) = 1.0/dy;
+                // lhs(n,n) = 1.0/dy;
+                // lhs(n,n-ni) = -1.0/dy;
+                A(n,n) = 1.0;
+                lhs(n,n) = 1.0;
             }
             else // Should I be applying these BCs to both matrices? Should they be opposite signs, or the same? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             {
+                // TODO Try just adding I+L I-L to make sure this is right
+                // TODO try using central difference, find answer
                 // I - Ddt/2*L
                 A(n,n-ni) = -D*dt/(2*dx*dx);
-                A(n,n-1) = -D*dt/(2*dy*dy);
+                A(n,n-1) = D*dt/(4*r*dy) +-D*dt/(2*dy*dy);
                 A(n,n) = 1 + D*dt/(2*r*dy) + D*dt/(dy*dy) + D*dt/(dx*dx);
-                A(n,n+1) = -D*dt/(2*r*dy) - D*dt/(2*dy*dy);
+                A(n,n+1) = -D*dt/(4*r*dy) - D*dt/(2*dy*dy);
                 A(n,n+ni) = -D*dt/(2*dx*dx);
 
                 // I + Ddt/2*L
                 lhs(n,n-ni) = D*dt/(2*dx*dx);
-                lhs(n,n-1) = D*dt/(2*dy*dy);
-                lhs(n,n) = 1 - D*dt/(2*r*dy) - D*dt/(dy*dy) - D*dt/(dx*dx);
-                lhs(n,n+1) = D*dt/(2*r*dy) + D*dt/(2*dy*dy);
+                lhs(n,n-1) = -D*dt/(4*r*dy) + D*dt/(2*dy*dy);
+                lhs(n,n) = 1 - D*dt/(dy*dy) - D*dt/(dx*dx);
+                lhs(n,n+1) = D*dt/(4*r*dy) + D*dt/(2*dy*dy);
                 lhs(n,n+ni) = D*dt/(2*dx*dx);
 
             }
