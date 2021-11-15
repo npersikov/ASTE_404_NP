@@ -227,7 +227,7 @@ int main()
 
   	int nn = ni*nj;  // total number of nodes
 
-    int timesteps = 21000; // Why doesn't timestep # affect the simulation
+    int timesteps = 5000; // Why doesn't timestep # affect the simulation
     double dt = 0.01;
 
     double D = 0.1;
@@ -249,6 +249,7 @@ int main()
     // vector<double> test(25);
     vector<double> n_vector(nj*ni);
     // double* dotprod = new double[25];
+    double l1, l2, l3, l4, l5;
     for(int j = 0; j < nj; j++)
     {
         for(int i = 0; i < ni; i++)
@@ -353,19 +354,38 @@ int main()
                 // TODO Try just adding I+L I-L to make sure this is right
                 // TODO try using central difference, find answer
                 // I - Ddt/2*L
-                A(n,n-ni) = -D*dt/(2*dx*dx);
-                A(n,n-1) = D*dt/(4*r*dy) - D*dt/(2*dy*dy);
-                // A(n,n) = 1 + D*dt/(2*r*dy) + D*dt/(dy*dy) + D*dt/(dx*dx);
-                A(n,n) = 1 + D*dt/(dy*dy) + D*dt/(dx*dx);
-                A(n,n+1) = -D*dt/(4*r*dy) - D*dt/(2*dy*dy);
-                A(n,n+ni) = -D*dt/(2*dx*dx);
+                // A(n,n-ni) = -D*dt/(2*dx*dx);
+                // A(n,n-1) = D*dt/(4*r*dy) - D*dt/(2*dy*dy);
+                // // A(n,n) = 1 + D*dt/(2*r*dy) + D*dt/(dy*dy) + D*dt/(dx*dx);
+                // A(n,n) = 1 + D*dt/(dy*dy) + D*dt/(dx*dx);
+                // A(n,n+1) = -D*dt/(4*r*dy) - D*dt/(2*dy*dy);
+                // A(n,n+ni) = -D*dt/(2*dx*dx);
+
+                // // I + Ddt/2*L
+                // lhs(n,n-ni) = D*dt/(2*dx*dx);
+                // lhs(n,n-1) = -D*dt/(4*r*dy) + D*dt/(2*dy*dy);
+                // lhs(n,n) = 1 - D*dt/(dy*dy) - D*dt/(dx*dx);
+                // lhs(n,n+1) = D*dt/(4*r*dy) + D*dt/(2*dy*dy);
+                // lhs(n,n+ni) = D*dt/(2*dx*dx);
+
+                l1 = 1/(dy*dy) - 1/(2*r*dy);
+                l2 = 1/(dx*dx);
+                l3 = -2/(dy*dy) - 2/(dx*dx);
+                l4 = 1/(dx*dx);
+                l5 = 1/(dy*dy) + 1/(2*r*dy);
+
+                A(n,n-ni) = -D*dt/2 * l1;
+                A(n,n-1) = -D*dt/2 * l2;
+                A(n,n) = 1 - (D*dt/2 * l3);
+                A(n,n+1) = -D*dt/2 * l4;
+                A(n,n+ni) = -D*dt/2 * l5;
 
                 // I + Ddt/2*L
-                lhs(n,n-ni) = D*dt/(2*dx*dx);
-                lhs(n,n-1) = -D*dt/(4*r*dy) + D*dt/(2*dy*dy);
-                lhs(n,n) = 1 - D*dt/(dy*dy) - D*dt/(dx*dx);
-                lhs(n,n+1) = D*dt/(4*r*dy) + D*dt/(2*dy*dy);
-                lhs(n,n+ni) = D*dt/(2*dx*dx);
+                lhs(n,n-ni) = D*dt/2 * l1;
+                lhs(n,n-1) = D*dt/2 * l2;
+                lhs(n,n) = 1 + D*dt/2 * l3;
+                lhs(n,n+1) = D*dt/2 * l4;
+                lhs(n,n+ni) = D*dt/2 * l5;
 
                 // A(n,n-ni) = -D*dt/(2*dy*dy) + dt/(4*dy);
                 // A(n,n-1) = -D*dt/(2*dx*dx);
