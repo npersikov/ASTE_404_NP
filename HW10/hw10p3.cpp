@@ -216,21 +216,24 @@ int main()
     int ni = 51;   // number of nodes
   	int nj = 26;
 
-  	double x0 = 0.1;  // origin
-  	double y0 = 0.1;
+    double inletDensity = 100.0;
+    double outletDensity = 0.0;
+
+  	double x0 = 0.0;  // origin
+  	double y0 = 0.0;
 
   	double dx = 0.01;  // cell spacing
   	double dy = 0.01;
 
   	int nn = ni*nj;  // total number of nodes
 
-    int timesteps = 100;
+    int timesteps = 100; // Why doesn't timestep # affect the simulation
     double dt = 0.01;
 
     double D = 0.1;
     double inlet_size = 0.04;
-    double outlet_inner_radius = 0.1;
-    double outlet_outer_radius = 0.2;
+    double outlet_inner_radius = 0.06; // was 0.1 // Are these the same definitions as the answer?
+    double outlet_outer_radius = 0.1; // was 0.2
 
     vector<double> g(nn);
 
@@ -252,14 +255,28 @@ int main()
         {
             int n = j*ni + i;
             z = (double)i*dx; // This is actually z
-            r = (double)j*dy + dy/2; // This is actually rho/r
+            r = (double)j*dy; // This is actually rho/r
 
             n_vector[n] = 0; // All initial densities are 0 except for the boundary conditions
 
+
+                        // Inlet and outlet BCs
+            if(i == 0 && r <= inlet_size) // If at the inlet
+            {
+                n_vector[n] = inletDensity;
+                A(n,n) = 1.0; // Why do we have to apply the boundary conditions here too?
+                lhs(n,n) = 1.0;
+            }
+            else if(i == ni-1 && r >= outlet_inner_radius && r <= outlet_outer_radius) // If at the outlet
+            {
+                n_vector[n] = outletDensity;
+                A(n,n) = 1.0; // Why do we have to apply the boundary conditions here too?
+                lhs(n,n) = 1.0;
+            }
             // This section is what I am mostly confused about <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // Neumann boundary conditions
             // TODO try dirichlet only
-            if(i == 0)
+            else if(i == 0)
             {
                 // A(n,n) = 1.0/dx;
                 // A(n,n+1) = -1.0/dx;
@@ -269,10 +286,19 @@ int main()
 
                 // A(n,n) = 1.0;
                 // lhs(n,n) = 1.0;
-                A(n,n) = -1.0/(dy*dy);
-                lhs(n,n) = -1.0/(dy*dy);
-                 A(n,n+1) = -1.0/(dx*dx);
-                lhs(n,n+1) = -1.0/(dx*dx);
+
+                // A(n,n) = 1.0/(dx*dx);
+                // A(n,n+1) = -1.0/(dx*dx);
+
+                A(n,n) = 1.0;
+                A(n,n+1) = -1.0;
+                // lhs(n,n) = -1.0/(dx*dx);
+                // lhs(n,n+1) = -1.0/(dx*dx);
+
+                // A(n,n) = 1.0;
+                // A(n,n+1) = -1.0;
+                // lhs(n,n) = 1.0;
+                // lhs(n,n+1) = -1.0;
             }
             else if(j == 0)
             {
@@ -281,8 +307,14 @@ int main()
 
                 // lhs(n,n) = 1.0/dy;
                 // lhs(n,n+ni) = -1.0/dy;
+                // A(n,n) = 1.0;
+                // lhs(n,n) = 1.0;
+
+                // A(n,n) = 1.0/(dy*dy);
+                // A(n,n+ni) = -1.0/(dy*dy);
+
                 A(n,n) = 1.0;
-                lhs(n,n) = 1.0;
+                A(n,n+ni) = -1.0;
             }
             else if(i == ni - 1)
             {
@@ -291,8 +323,14 @@ int main()
 
                 // lhs(n,n) = 1.0/dx;
                 // lhs(n,n-1) = -1.0/dx;
-                A(n,n) = 1.0;
-                lhs(n,n) = 1.0;
+                // A(n,n) = 1.0;
+                // lhs(n,n) = 1.0;
+
+                // A(n,n) = -1.0/(dx*dx);
+                // A(n,n-1) = 1.0/(dx*dx);
+
+                A(n,n) = -1.0;
+                A(n,n-1) = 1.0;
             }
             else if(j == nj - 1)
             {
@@ -301,8 +339,14 @@ int main()
 
                 // lhs(n,n) = 1.0/dy;
                 // lhs(n,n-ni) = -1.0/dy;
-                A(n,n) = 1.0;
-                lhs(n,n) = 1.0;
+                // A(n,n) = 1.0;
+                // lhs(n,n) = 1.0;
+
+                // A(n,n) = -1.0/(dy*dy);
+                // A(n,n-ni) = 1.0/(dy*dy);
+
+                A(n,n) = -1.0;
+                A(n,n-ni) = 1.0;
             }
             else // Should I be applying these BCs to both matrices? Should they be opposite signs, or the same? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             {
@@ -310,8 +354,9 @@ int main()
                 // TODO try using central difference, find answer
                 // I - Ddt/2*L
                 A(n,n-ni) = -D*dt/(2*dx*dx);
-                A(n,n-1) = D*dt/(4*r*dy) +-D*dt/(2*dy*dy);
-                A(n,n) = 1 + D*dt/(2*r*dy) + D*dt/(dy*dy) + D*dt/(dx*dx);
+                A(n,n-1) = D*dt/(4*r*dy) -D*dt/(2*dy*dy);
+                // A(n,n) = 1 + D*dt/(2*r*dy) + D*dt/(dy*dy) + D*dt/(dx*dx);
+                A(n,n) = 1 + D*dt/(dy*dy) + D*dt/(dx*dx);
                 A(n,n+1) = -D*dt/(4*r*dy) - D*dt/(2*dy*dy);
                 A(n,n+ni) = -D*dt/(2*dx*dx);
 
@@ -322,16 +367,19 @@ int main()
                 lhs(n,n+1) = D*dt/(4*r*dy) + D*dt/(2*dy*dy);
                 lhs(n,n+ni) = D*dt/(2*dx*dx);
 
-            }
+                // A(n,n-ni) = -D*dt/(2*dx*dx);
+                // A(n,n-1) = -D*dt/(2*dy*dy) + dt/(4*dy);
+                // A(n,n) = 1 + D*dt/(dx*dx) + dt/(2*dy*dy);
+                // A(n,n+1) = -D*dt/(2*dy*dy) - dt/(4*dy);
+                // A(n,n+ni) = -D*dt/(2*dx*dx);
 
-            // Inlet and outlet BCs
-            if(i == 0 && r <= inlet_size) // If at the inlet
-            {
-                n_vector[n] = 100.0;
-            }
-            if(i == ni-1 && r >= outlet_inner_radius && r <= outlet_outer_radius) // If at the outlet
-            {
-                n_vector[n] = 0.0;
+                // // I + Ddt/2*L
+                // lhs(n,n-ni) = D*dt/(2*dx*dx);
+                // lhs(n,n-1) = D*dt/(2*dy*dy) - dt/(4*dy);
+                // lhs(n,n) = 1 -D*dt/(dx*dx) - dt/(2*dy*dy);
+                // lhs(n,n+1) = D*dt/(2*dy*dy) + dt/(4*dy);
+                // lhs(n,n+ni) = D*dt/(2*dx*dx);
+
             }
 
             // test[n] = 1;
@@ -385,11 +433,11 @@ int main()
 
                 if(i == 0 && r <= inlet_size) // If at the inlet
                 {
-                    n_vector[n] = 100;
+                    n_vector[n] = inletDensity;
                 }
                 if(i == ni-1 && r >= outlet_inner_radius && r <= outlet_outer_radius) // If at the outlet
                 {
-                    n_vector[n] = 0;
+                    n_vector[n] = outletDensity;
                 }
 
             }
