@@ -216,7 +216,7 @@ int main()
     int ni = 51;   // number of nodes
   	int nj = 26;
 
-    double inletDensity = 100.0;
+    double inletDensity = 10.0;
     double outletDensity = 0.0;
 
   	double x0 = 0.0;  // origin
@@ -227,12 +227,12 @@ int main()
 
   	int nn = ni*nj;  // total number of nodes
 
-    int timesteps = 100; // Why doesn't timestep # affect the simulation
+    int timesteps = 21000; // Why doesn't timestep # affect the simulation
     double dt = 0.01;
 
     double D = 0.1;
     double inlet_size = 0.04;
-    double outlet_inner_radius = 0.06; // was 0.1 // Are these the same definitions as the answer?
+    double outlet_inner_radius = 0.1; // was 0.1 // Are these the same definitions as the answer?
     double outlet_outer_radius = 0.1; // was 0.2
 
     vector<double> g(nn);
@@ -255,7 +255,7 @@ int main()
         {
             int n = j*ni + i;
             z = (double)i*dx; // This is actually z
-            r = (double)j*dy; // This is actually rho/r
+            r = (double)j*dy+dy/2; // This is actually rho/r
 
             n_vector[n] = 0; // All initial densities are 0 except for the boundary conditions
 
@@ -300,6 +300,22 @@ int main()
                 // lhs(n,n) = 1.0;
                 // lhs(n,n+1) = -1.0;
             }
+            else if(i == ni - 1)
+            {
+                // A(n,n) = 1.0/dx;
+                // A(n,n-1) = -1.0/dx;
+
+                // lhs(n,n) = 1.0/dx;
+                // lhs(n,n-1) = -1.0/dx;
+                // A(n,n) = 1.0;
+                // lhs(n,n) = 1.0;
+
+                // A(n,n) = -1.0/(dx*dx);
+                // A(n,n-1) = 1.0/(dx*dx);
+
+                A(n,n) = 1.0;
+                A(n,n-1) = -1.0;
+            }
             else if(j == 0)
             {
                 // A(n,n) = 1.0/dy;
@@ -316,22 +332,6 @@ int main()
                 A(n,n) = 1.0;
                 A(n,n+ni) = -1.0;
             }
-            else if(i == ni - 1)
-            {
-                // A(n,n) = 1.0/dx;
-                // A(n,n-1) = -1.0/dx;
-
-                // lhs(n,n) = 1.0/dx;
-                // lhs(n,n-1) = -1.0/dx;
-                // A(n,n) = 1.0;
-                // lhs(n,n) = 1.0;
-
-                // A(n,n) = -1.0/(dx*dx);
-                // A(n,n-1) = 1.0/(dx*dx);
-
-                A(n,n) = -1.0;
-                A(n,n-1) = 1.0;
-            }
             else if(j == nj - 1)
             {
                 // A(n,n) = 1.0/dy;
@@ -345,8 +345,8 @@ int main()
                 // A(n,n) = -1.0/(dy*dy);
                 // A(n,n-ni) = 1.0/(dy*dy);
 
-                A(n,n) = -1.0;
-                A(n,n-ni) = 1.0;
+                A(n,n) = 1.0;
+                A(n,n-ni) = -1.0;
             }
             else // Should I be applying these BCs to both matrices? Should they be opposite signs, or the same? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             {
@@ -354,7 +354,7 @@ int main()
                 // TODO try using central difference, find answer
                 // I - Ddt/2*L
                 A(n,n-ni) = -D*dt/(2*dx*dx);
-                A(n,n-1) = D*dt/(4*r*dy) -D*dt/(2*dy*dy);
+                A(n,n-1) = D*dt/(4*r*dy) - D*dt/(2*dy*dy);
                 // A(n,n) = 1 + D*dt/(2*r*dy) + D*dt/(dy*dy) + D*dt/(dx*dx);
                 A(n,n) = 1 + D*dt/(dy*dy) + D*dt/(dx*dx);
                 A(n,n+1) = -D*dt/(4*r*dy) - D*dt/(2*dy*dy);
@@ -367,18 +367,18 @@ int main()
                 lhs(n,n+1) = D*dt/(4*r*dy) + D*dt/(2*dy*dy);
                 lhs(n,n+ni) = D*dt/(2*dx*dx);
 
-                // A(n,n-ni) = -D*dt/(2*dx*dx);
-                // A(n,n-1) = -D*dt/(2*dy*dy) + dt/(4*dy);
-                // A(n,n) = 1 + D*dt/(dx*dx) + dt/(2*dy*dy);
-                // A(n,n+1) = -D*dt/(2*dy*dy) - dt/(4*dy);
-                // A(n,n+ni) = -D*dt/(2*dx*dx);
+                // A(n,n-ni) = -D*dt/(2*dy*dy) + dt/(4*dy);
+                // A(n,n-1) = -D*dt/(2*dx*dx);
+                // A(n,n) = 1 + D*dt/(dx*dx) - dt/(2*dy*dy);
+                // A(n,n+1) = -D*dt/(2*dx*dx);
+                // A(n,n+ni) = -D*dt/(2*dy*dy) - dt/(4*dy);
 
                 // // I + Ddt/2*L
-                // lhs(n,n-ni) = D*dt/(2*dx*dx);
-                // lhs(n,n-1) = D*dt/(2*dy*dy) - dt/(4*dy);
-                // lhs(n,n) = 1 -D*dt/(dx*dx) - dt/(2*dy*dy);
-                // lhs(n,n+1) = D*dt/(2*dy*dy) + dt/(4*dy);
-                // lhs(n,n+ni) = D*dt/(2*dx*dx);
+                // lhs(n,n-ni) = D*dt/(2*dy*dy) - dt/(4*dy);
+                // lhs(n,n-1) = D*dt/(2*dx*dx);
+                // lhs(n,n) = 1 - D*dt/(dx*dx) + dt/(2*dy*dy);
+                // lhs(n,n+1) = D*dt/(2*dx*dx);
+                // lhs(n,n+ni) = D*dt/(2*dy*dy) + dt/(4*dy);
 
             }
 
@@ -406,7 +406,7 @@ int main()
     // }
 
     // The actual flow simulation
-    for(int time_step = 0; time_step < timesteps; time_step++)
+    for(int time_step = 0; time_step <= timesteps; time_step++)
     {
         cout << "Progress: " << (double)time_step/(double)timesteps*100 << "%" << endl;
         vector<double> b(ni*nj); // Allocate b vector in Ax = b system
@@ -422,7 +422,7 @@ int main()
         // Solve the system for this time step and update the n vector
         n_vector = solveGS(A,b);
 
-        // Keep applying the boundary conditions. I should keep refreshing the inlet/outlet number densitites, right? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // Keep applying the boundary conditions.
         for(int j = 0; j < nj; j++)
         {
             for(int i = 0; i < ni; i++)
@@ -442,26 +442,31 @@ int main()
 
             }
         }
+
+        int ts = time_step;
+        if(ts <= 5 || ts == 10 || ts == 20 || ts == 50 || ts == 100 || ts == 200 || ts == 1000 || ts == 3000 || ts == 5000 || ts == timesteps)
+        {
+            /* output vti file */
+            ofstream out("field" + std::to_string(ts) + ".vti");
+
+            out<<"<VTKFile type=\"ImageData\">\n";
+            out<<"<ImageData WholeExtent=\"0 "<<ni-1<<" 0 "<<nj-1<<" 0 "<<0<<"\""; 
+            out<<" Origin=\""<<x0<<" "<<y0<<" "<<0.0<<"\"";
+            out<<" Spacing=\""<<dx<<" " <<dy<<" "<<0.0<<"\">\n";
+            out<<"<Piece Extent=\"0 "<<ni-1<<" 0 "<<nj-1<<" 0 "<<0<<"\">\n"; 
+            out<<"<PointData>\n";
+
+            out<<"<DataArray Name=\"T\" NumberOfComponents=\"1\" format=\"ascii\" type=\"Float64\">\n";
+            for (int n=0;n<nn;n++) out<<n_vector[n]<<" ";	
+            out<<"\n</DataArray>\n";
+
+            out<<"</PointData>\n";
+            out<<"</Piece>\n";
+            out<<"</ImageData>\n";
+            out<<"</VTKFile>\n";
+        }
     }
-
-    /* output vti file */
-  	ofstream out("field.vti");
-
-  	out<<"<VTKFile type=\"ImageData\">\n";
-  	out<<"<ImageData WholeExtent=\"0 "<<ni-1<<" 0 "<<nj-1<<" 0 "<<0<<"\""; 
-  	out<<" Origin=\""<<x0<<" "<<y0<<" "<<0.0<<"\"";
-  	out<<" Spacing=\""<<dx<<" " <<dy<<" "<<0.0<<"\">\n";
-  	out<<"<Piece Extent=\"0 "<<ni-1<<" 0 "<<nj-1<<" 0 "<<0<<"\">\n"; 
-  	out<<"<PointData>\n";
-
-	out<<"<DataArray Name=\"T\" NumberOfComponents=\"1\" format=\"ascii\" type=\"Float64\">\n";
-	for (int n=0;n<nn;n++) out<<n_vector[n]<<" ";	
-	out<<"\n</DataArray>\n";
-
-	out<<"</PointData>\n";
-	out<<"</Piece>\n";
-	out<<"</ImageData>\n";
-	out<<"</VTKFile>\n";
+    
 
 	// free memory
 	return 0;	// normal exit
