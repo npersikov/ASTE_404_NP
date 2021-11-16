@@ -274,99 +274,29 @@ int main()
                 A(n,n) = 1.0; // Why do we have to apply the boundary conditions here too?
                 lhs(n,n) = 1.0;
             }
-            // This section is what I am mostly confused about <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            // Neumann boundary conditions
-            // TODO try dirichlet only
             else if(i == 0)
             {
-                // A(n,n) = 1.0/dx;
-                // A(n,n+1) = -1.0/dx;
-
-                // lhs(n,n) = 1.0/dx;
-                // lhs(n,n+1) = -1.0/dx;
-
-                // A(n,n) = 1.0;
-                // lhs(n,n) = 1.0;
-
-                // A(n,n) = 1.0/(dx*dx);
-                // A(n,n+1) = -1.0/(dx*dx);
-
                 A(n,n) = 1.0;
                 A(n,n+1) = -1.0;
-                // lhs(n,n) = -1.0/(dx*dx);
-                // lhs(n,n+1) = -1.0/(dx*dx);
-
-                // A(n,n) = 1.0;
-                // A(n,n+1) = -1.0;
-                // lhs(n,n) = 1.0;
-                // lhs(n,n+1) = -1.0;
             }
             else if(i == ni - 1)
             {
-                // A(n,n) = 1.0/dx;
-                // A(n,n-1) = -1.0/dx;
-
-                // lhs(n,n) = 1.0/dx;
-                // lhs(n,n-1) = -1.0/dx;
-                // A(n,n) = 1.0;
-                // lhs(n,n) = 1.0;
-
-                // A(n,n) = -1.0/(dx*dx);
-                // A(n,n-1) = 1.0/(dx*dx);
-
                 A(n,n) = 1.0;
                 A(n,n-1) = -1.0;
             }
             else if(j == 0)
             {
-                // A(n,n) = 1.0/dy;
-                // A(n,n+ni) = -1.0/dy;
-
-                // lhs(n,n) = 1.0/dy;
-                // lhs(n,n+ni) = -1.0/dy;
-                // A(n,n) = 1.0;
-                // lhs(n,n) = 1.0;
-
-                // A(n,n) = 1.0/(dy*dy);
-                // A(n,n+ni) = -1.0/(dy*dy);
-
                 A(n,n) = 1.0;
                 A(n,n+ni) = -1.0;
             }
             else if(j == nj - 1)
             {
-                // A(n,n) = 1.0/dy;
-                // A(n,n-ni) = -1.0/dy;
-
-                // lhs(n,n) = 1.0/dy;
-                // lhs(n,n-ni) = -1.0/dy;
-                // A(n,n) = 1.0;
-                // lhs(n,n) = 1.0;
-
-                // A(n,n) = -1.0/(dy*dy);
-                // A(n,n-ni) = 1.0/(dy*dy);
 
                 A(n,n) = 1.0;
                 A(n,n-ni) = -1.0;
             }
             else // Should I be applying these BCs to both matrices? Should they be opposite signs, or the same? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             {
-                // TODO Try just adding I+L I-L to make sure this is right
-                // TODO try using central difference, find answer
-                // I - Ddt/2*L
-                // A(n,n-ni) = -D*dt/(2*dx*dx);
-                // A(n,n-1) = D*dt/(4*r*dy) - D*dt/(2*dy*dy);
-                // // A(n,n) = 1 + D*dt/(2*r*dy) + D*dt/(dy*dy) + D*dt/(dx*dx);
-                // A(n,n) = 1 + D*dt/(dy*dy) + D*dt/(dx*dx);
-                // A(n,n+1) = -D*dt/(4*r*dy) - D*dt/(2*dy*dy);
-                // A(n,n+ni) = -D*dt/(2*dx*dx);
-
-                // // I + Ddt/2*L
-                // lhs(n,n-ni) = D*dt/(2*dx*dx);
-                // lhs(n,n-1) = -D*dt/(4*r*dy) + D*dt/(2*dy*dy);
-                // lhs(n,n) = 1 - D*dt/(dy*dy) - D*dt/(dx*dx);
-                // lhs(n,n+1) = D*dt/(4*r*dy) + D*dt/(2*dy*dy);
-                // lhs(n,n+ni) = D*dt/(2*dx*dx);
 
                 l1 = 1/(dy*dy) - 1/(2*r*dy);
                 l2 = 1/(dx*dx);
@@ -387,43 +317,11 @@ int main()
                 lhs(n,n+1) = D*dt/2 * l4;
                 lhs(n,n+ni) = D*dt/2 * l5;
 
-                // A(n,n-ni) = -D*dt/(2*dy*dy) + dt/(4*dy);
-                // A(n,n-1) = -D*dt/(2*dx*dx);
-                // A(n,n) = 1 + D*dt/(dx*dx) - dt/(2*dy*dy);
-                // A(n,n+1) = -D*dt/(2*dx*dx);
-                // A(n,n+ni) = -D*dt/(2*dy*dy) - dt/(4*dy);
-
-                // // I + Ddt/2*L
-                // lhs(n,n-ni) = D*dt/(2*dy*dy) - dt/(4*dy);
-                // lhs(n,n-1) = D*dt/(2*dx*dx);
-                // lhs(n,n) = 1 - D*dt/(dx*dx) + dt/(2*dy*dy);
-                // lhs(n,n+1) = D*dt/(2*dx*dx);
-                // lhs(n,n+ni) = D*dt/(2*dy*dy) + dt/(4*dy);
-
             }
 
             // test[n] = 1;
         }
     }
-
-    // for(int rows = 0; rows < 25; rows++)
-    // {
-    //     dotprod[rows] = A.dotRow(rows, test);
-    // }
-
-    // Print A for debugging
-    // for(int j = 0; j < nn; j++)
-    // {
-    //     for(int i = 0; i < nn; i++)
-    //     {
-    //         // cout << "error is here" << endl;
-    //         if(j-i == -ni || j-i == -1 || j-i == 0 || j-i == 1 || j-i == ni)
-    //             cout << A(j,i) << ' ';
-    //         else 
-    //             cout << '0' << ' ';
-    //     }
-    //     cout << endl;
-    // }
 
     // The actual flow simulation
     for(int time_step = 0; time_step <= timesteps; time_step++)
