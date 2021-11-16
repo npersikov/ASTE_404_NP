@@ -213,10 +213,10 @@ int main()
     // int ni = 51;   // number of nodes
   	// int nj = 26;
 
-    int ni = 51;   // number of nodes
-  	int nj = 26;
+    int ni = 101;   // number of nodes
+  	int nj = 51;
 
-    double inletDensity = 10.0;
+    double inletDensity = 100.0;
     double outletDensity = 0.0;
 
   	double x0 = 0.0;  // origin
@@ -227,13 +227,13 @@ int main()
 
   	int nn = ni*nj;  // total number of nodes
 
-    int timesteps = 5000; // Why doesn't timestep # affect the simulation
+    int timesteps = 50000; // Why doesn't timestep # affect the simulation
     double dt = 0.01;
 
     double D = 0.1;
-    double inlet_size = 0.04;
+    double inlet_size = 0.04; // was 0.04
     double outlet_inner_radius = 0.1; // was 0.1 // Are these the same definitions as the answer?
-    double outlet_outer_radius = 0.1; // was 0.2
+    double outlet_outer_radius = 0.2; // was 0.2
 
     vector<double> g(nn);
 
@@ -428,7 +428,8 @@ int main()
     // The actual flow simulation
     for(int time_step = 0; time_step <= timesteps; time_step++)
     {
-        cout << "Progress: " << (double)time_step/(double)timesteps*100 << "%" << endl;
+        if(time_step % 100 == 0)
+            cout << "Progress: " << (double)time_step/(double)timesteps*100 << "%" << endl;
         vector<double> b(ni*nj); // Allocate b vector in Ax = b system
 
         // Create b vector using (I + Ddt/2*L) dot n^k
@@ -464,7 +465,8 @@ int main()
         }
 
         int ts = time_step;
-        if(ts <= 5 || ts == 10 || ts == 20 || ts == 50 || ts == 100 || ts == 200 || ts == 1000 || ts == 3000 || ts == 5000 || ts == timesteps)
+        // if(ts == 0 || ts == 100 || ts == 400 || ts == 1000 || ts == 2000 || ts == 3700 || ts == 5000 || ts == 7400 || ts == timesteps)
+        if(ts == 0 || ts == 1000 || ts == 4000 || ts == 10000 || ts == 20000 || ts == 37000 || ts == timesteps)
         {
             /* output vti file */
             ofstream out("field" + std::to_string(ts) + ".vti");
@@ -514,7 +516,7 @@ vector<double> solveGS(Matrix &A, vector<double> &g)
 
             double L2 = sqrt(mag2(R)/nr);
 
-            cout << "Solver iteration: " << it << ", L2 norm: " << L2 << endl;
+            // cout << "Solver iteration: " << it << ", L2 norm: " << L2 << endl;
             if(L2 < 1e-4)
                 break;
         } 
